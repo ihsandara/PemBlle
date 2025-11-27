@@ -1,0 +1,29 @@
+# Environment files
+.env
+.env.local
+.env.production
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Node modules (frontend)
+pemblle_frontend/node_modules/
+pemblle_frontend/dist/
+
+# Go binaries (backend)
+pemblle_backend/*.exe
+pemblle_backend/main
+
+# Uploads
+pemblle_backend/uploads/avatars/*
+!pemblle_backend/uploads/avatars/.gitkeep

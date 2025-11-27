@@ -1,0 +1,44 @@
+# --- OS Files ---
+.DS_Store
+Thumbs.db
+
+# --- Node.js ---
+node_modules/
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+
+# --- Environment Variables ---
+.env
+.env.*
+
+# --- Build Outputs ---
+dist/
+build/
+out/
+
+# --- Logs ---
+logs/
+*.log
+
+# --- IDE Files ---
+# VS Code
+.vscode/
+
+# JetBrains
+.idea/
+*.iml
+
+# --- .NET ---
+bin/
+obj/
+*.user
+*.suo
+
+# --- Python ---
+__pycache__/
+*.pyc
+
+# --- Others ---
+*.tmp
+*.swp
