@@ -10,6 +10,7 @@ import VerifyEmail from './pages/VerifyEmail'
 import VerifyRequest from './pages/VerifyRequest'
 import Notifications from './pages/Notifications'
 import Users from './pages/Users'
+import PrivacyPolicy from './pages/PrivacyPolicy'
 import Navbar from './components/Navbar'
 import ProtectedRoute from './components/ProtectedRoute'
 
@@ -35,6 +36,7 @@ function App() {
             <Route path="/register" element={<Register />} />
             <Route path="/verify" element={<VerifyEmail />} />
             <Route path="/verify-request" element={<VerifyRequest />} />
+            <Route path="/privacy" element={<PrivacyPolicy />} />
             <Route path="/u/:username" element={<PublicProfile />} />
             
             {/* Home - Landing for guests, Home for logged users */}
