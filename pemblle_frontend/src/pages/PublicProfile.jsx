@@ -78,7 +78,7 @@ function PublicProfile() {
         setIsChatting(true)
         try {
             const token = localStorage.getItem('token')
-            const res = await axios.post('/api/chat', {
+            const res = await axios.post('/api/chats', {
                 user_id: user.id
             }, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -86,7 +86,7 @@ function PublicProfile() {
             navigate(`/chat/${res.data.ID}`)
         } catch (err) {
             console.error('Failed to start chat:', err)
-            alert('Failed to start chat')
+            setMessage({ type: 'error', text: t('failed_start_chat') })
         } finally {
             setIsChatting(false)
         }

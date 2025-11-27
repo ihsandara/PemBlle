@@ -22,7 +22,7 @@ function TellCard({ tell, onAnswer, showReplies = true, isSender = false }) {
         setIsChatting(true)
         try {
             const token = localStorage.getItem('token')
-            const res = await axios.post('/api/chat', {
+            const res = await axios.post('/api/chats', {
                 user_id: tell.sender_id
             }, {
                 headers: { Authorization: `Bearer ${token}` }
@@ -30,7 +30,6 @@ function TellCard({ tell, onAnswer, showReplies = true, isSender = false }) {
             navigate(`/chat/${res.data.ID}`)
         } catch (err) {
             console.error('Failed to start chat:', err)
-            alert('Failed to start chat')
         } finally {
             setIsChatting(false)
         }

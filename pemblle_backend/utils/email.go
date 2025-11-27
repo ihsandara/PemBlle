@@ -315,3 +315,31 @@ func SendNewFollowerEmail(toEmail string, followerName string, isAnonymous bool)
 
 	return SendEmail(toEmail, title+" - "+fromName, body)
 }
+
+func SendNewMessageEmail(toEmail string, senderName string) error {
+	fromName := os.Getenv("SMTP_FROM_NAME")
+	if fromName == "" {
+		fromName = "PemBlle"
+	}
+	baseURL := os.Getenv("FRONTEND_URL")
+	if baseURL == "" {
+		baseURL = "http://localhost:5173"
+	}
+
+	content := fmt.Sprintf(`
+		<p style="margin: 0 0 15px 0;">💬 <strong style="color: #a855f7;">%s</strong> sent you a message!</p>
+		<p style="margin: 0 0 15px 0;">You have a new direct message waiting for you. Log in to read and reply.</p>
+		<p style="margin: 0; color: #808090; font-size: 14px;">Stay connected with your friends! 💜</p>
+	`, senderName)
+
+	body := getEmailTemplate(
+		"New Message!",
+		content,
+		"View Message",
+		baseURL+"/chat",
+		"You received this because someone sent you a direct message.",
+		"💬",
+	)
+
+	return SendEmail(toEmail, "New message from "+senderName+" - "+fromName, body)
+}

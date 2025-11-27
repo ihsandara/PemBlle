@@ -180,5 +180,23 @@
     "terms_rights": "Intellectual Property",
     "terms_rights_content": "• The service and its original content are protected by copyright\n• Our open source code is licensed under the MIT License\n• You may not use our trademarks without prior written permission",
     "terms_disclaimer": "Disclaimer",
-    "terms_disclaimer_content": "• The service is provided 'AS IS' without warranties of any kind\n• We are not responsible for any damages resulting from your use of the service\n• We do not guarantee that the service will be uninterrupted or error-free"
+    "terms_disclaimer_content": "• The service is provided 'AS IS' without warranties of any kind\n• We are not responsible for any damages resulting from your use of the service\n• We do not guarantee that the service will be uninterrupted or error-free",
+    
+    "messages": "Messages",
+    "your_conversations": "Your conversations",
+    "search_conversations": "Search conversations...",
+    "no_messages_yet": "No messages yet",
+    "no_chats_yet": "No conversations yet",
+    "start_conversation_hint": "Start a conversation with someone to see it here",
+    "find_users": "Find Users",
+    "tap_to_start_chatting": "Tap to start chatting",
+    "loading_chats": "Loading conversations...",
+    "loading_messages": "Loading messages...",
+    "type_message": "Type a message...",
+    "send_first_message": "Send the first message to start the conversation",
+    "you": "You",
+    "yesterday": "Yesterday",
+    "failed_fetch_chats": "Failed to load conversations",
+    "failed_start_chat": "Failed to start conversation",
+    "send_message": "Send message"
 }

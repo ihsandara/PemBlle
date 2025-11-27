@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"prswjo/models"
+	"prswjo/utils"
 	"prswjo/ws"
 	"time"
 
@@ -198,6 +199,18 @@ func (h *ChatHandler) SendMessage(c *fiber.Ctx) error {
 		"chat_id": chatUUID.String(),
 		"message": message,
 	})
+
+	// Send email notification to the other user
+	go func() {
+		var otherUser models.User
+		if err := h.DB.First(&otherUser, "id = ?", otherUserID).Error; err == nil && otherUser.Email != "" {
+			senderName := message.Sender.FullName
+			if senderName == "" {
+				senderName = message.Sender.Username
+			}
+			utils.SendNewMessageEmail(otherUser.Email, senderName)
+		}
+	}()
 
 	return c.JSON(message)
 }
