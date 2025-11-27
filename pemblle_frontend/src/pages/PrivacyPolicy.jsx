@@ -119,7 +119,7 @@ function PrivacyPolicy() {
                         {t('privacy_opensource_content')}
                     </p>
                     <a 
-                        href="https://github.com/ihsandara/PemBlle" 
+                        href="https://github.com/ihsandara" 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 px-6 py-3 bg-dark-700 hover:bg-dark-600 border border-dark-600 hover:border-dark-500 rounded-xl text-dark-200 transition-all duration-300"
