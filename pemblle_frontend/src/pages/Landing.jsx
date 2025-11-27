@@ -110,7 +110,7 @@ function Landing() {
                             <div className="absolute inset-0 bg-gradient-to-r from-purple-600 to-brand-500 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
                         </Link>
                         <a 
-                            href="https://github.com/ihsandara" 
+                            href="https://github.com/ihsandara/PemBlle" 
                             target="_blank" 
                             rel="noopener noreferrer"
                             className="group px-8 py-4 bg-dark-800/80 backdrop-blur-sm border border-dark-700 text-dark-200 text-lg font-semibold rounded-2xl hover:bg-dark-700 hover:border-dark-600 transition-all duration-300 flex items-center justify-center gap-3"
@@ -255,7 +255,7 @@ function Landing() {
                                 {t('opensource_desc')}
                             </p>
                             <a 
-                                href="https://github.com/ihsandara" 
+                                href="https://github.com/ihsandara/PemBlle" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="inline-flex items-center gap-3 px-8 py-4 bg-dark-700 hover:bg-dark-600 border border-dark-600 hover:border-dark-500 rounded-2xl text-dark-200 transition-all duration-300 hover:scale-105"
@@ -315,7 +315,7 @@ function Landing() {
                                 {t('privacy_policy')}
                             </Link>
                             <a 
-                                href="https://github.com/ihsandara" 
+                                href="https://github.com/ihsandara/PemBlle" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="text-dark-400 hover:text-brand-400 transition-colors text-sm font-medium flex items-center gap-2"
@@ -329,7 +329,7 @@ function Landing() {
 
                         <div className="flex items-center gap-4">
                             <a 
-                                href="https://github.com/ihsandara" 
+                                href="https://github.com/ihsandara/PemBlle" 
                                 target="_blank" 
                                 rel="noopener noreferrer"
                                 className="w-10 h-10 rounded-xl bg-dark-800 hover:bg-dark-700 flex items-center justify-center text-dark-400 hover:text-dark-200 transition-all"
