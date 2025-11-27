@@ -2,7 +2,7 @@ import { Link } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import { Shield, Eye, Lock, Database, Mail, Trash2, Globe, FileText } from 'lucide-react'
 
-function PrivacyPolicy() {
+function Policy() {
     const { t, i18n } = useTranslation()
     const isRtl = i18n.language === 'ar' || i18n.language === 'ku'
     const lastUpdated = 'November 27, 2024'
@@ -119,7 +119,7 @@ function PrivacyPolicy() {
                         {t('privacy_opensource_content')}
                     </p>
                     <a 
-                        href="https://github.com/ihsandara/PemBlle" 
+                        href="https://github.com/ihsandara" 
                         target="_blank" 
                         rel="noopener noreferrer"
                         className="inline-flex items-center gap-2 px-6 py-3 bg-dark-700 hover:bg-dark-600 border border-dark-600 hover:border-dark-500 rounded-xl text-dark-200 transition-all duration-300"
@@ -148,4 +148,4 @@ function PrivacyPolicy() {
     )
 }
 
-export default PrivacyPolicy
+export default Policy
