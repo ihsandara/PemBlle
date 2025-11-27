@@ -32,16 +32,16 @@ function ChatList() {
     }
 
     const filteredChats = chats.filter(chat => {
-        const otherUser = chat.User1ID === JSON.parse(localStorage.getItem('user')).id ? chat.User2 : chat.User1
+        const otherUser = chat.user1_id === JSON.parse(localStorage.getItem('user')).id ? chat.user2 : chat.user1
         return otherUser?.username?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-               otherUser?.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
+            otherUser?.full_name?.toLowerCase().includes(searchQuery.toLowerCase())
     })
 
     const formatTime = (dateString) => {
         const date = new Date(dateString)
         const now = new Date()
         const diff = now - date
-        
+
         if (diff < 24 * 60 * 60 * 1000) {
             return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
         } else if (diff < 48 * 60 * 60 * 1000) {
@@ -64,8 +64,8 @@ function ChatList() {
                         <p className="text-xs sm:text-sm text-dark-400">{t('your_conversations')}</p>
                     </div>
                 </div>
-                <Link 
-                    to="/users" 
+                <Link
+                    to="/users"
                     className="p-2.5 rounded-xl bg-dark-800 hover:bg-dark-700 text-dark-400 hover:text-white border border-dark-700 transition-all"
                     title={t('find_users')}
                 >
@@ -105,26 +105,33 @@ function ChatList() {
                 <div className="space-y-2">
                     {filteredChats.map(chat => {
                         const currentUser = JSON.parse(localStorage.getItem('user'))
-                        const otherUser = chat.User1ID === currentUser.id ? chat.User2 : chat.User1
-                        const lastMessage = chat.LastMessage
-                        const isUnread = chat.UnreadCount > 0
+                        const otherUser = chat.user1_id === currentUser.id ? chat.user2 : chat.user1
+                        const lastMessage = chat.last_message
+                        const isUnread = chat.unread_count > 0
 
                         return (
-                            <Link 
-                                key={chat.ID} 
-                                to={`/chat/${chat.ID}`}
-                                className={`flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl border transition-all group ${
-                                    isUnread 
-                                        ? 'bg-gradient-to-r from-brand-500/10 to-purple-500/5 border-brand-500/30 hover:border-brand-500/50' 
+                            <Link
+                                key={chat.id}
+                                to={`/chat/${chat.id}`}
+                                className={`flex items-center gap-3 sm:gap-4 p-3 sm:p-4 rounded-2xl border transition-all group ${isUnread
+                                        ? 'bg-gradient-to-r from-brand-500/10 to-purple-500/5 border-brand-500/30 hover:border-brand-500/50'
                                         : 'bg-dark-800/30 border-dark-800 hover:bg-dark-800/60 hover:border-dark-700'
-                                }`}
+                                    }`}
                             >
                                 <div className="relative flex-shrink-0">
-                                    <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center overflow-hidden ring-2 transition-all ${
-                                        isUnread ? 'ring-brand-500/50 bg-brand-600' : 'ring-dark-700 bg-brand-600 group-hover:ring-dark-600'
-                                    }`}>
+                                    <div className={`w-12 h-12 sm:w-14 sm:h-14 rounded-full flex items-center justify-center overflow-hidden ring-2 transition-all ${isUnread ? 'ring-brand-500/50 bg-brand-600' : 'ring-dark-700 bg-brand-600 group-hover:ring-dark-600'
+                                        }`}>
                                         {otherUser?.avatar ? (
-                                            <img src={otherUser.avatar} alt="" className="w-full h-full object-cover" />
+                                            <img
+                                                src={otherUser.avatar}
+                                                alt=""
+                                                className="w-full h-full object-cover"
+                                                onError={(e) => {
+                                                    e.target.onerror = null;
+                                                    e.target.style.display = 'none';
+                                                    e.target.parentElement.innerHTML = `<span class="text-white font-bold text-lg">${otherUser.username?.[0]?.toUpperCase()}</span>`;
+                                                }}
+                                            />
                                         ) : (
                                             <span className="text-white font-bold text-lg">
                                                 {otherUser?.username?.[0]?.toUpperCase()}
@@ -133,7 +140,7 @@ function ChatList() {
                                     </div>
                                     {isUnread && (
                                         <div className="absolute -top-0.5 -right-0.5 w-4 h-4 bg-brand-500 rounded-full border-2 border-dark-900 flex items-center justify-center">
-                                            <span className="text-[9px] font-bold text-white">{chat.UnreadCount > 9 ? '9+' : chat.UnreadCount}</span>
+                                            <span className="text-[9px] font-bold text-white">{chat.unread_count > 9 ? '9+' : chat.unread_count}</span>
                                         </div>
                                     )}
                                 </div>
@@ -145,16 +152,16 @@ function ChatList() {
                                         </h3>
                                         {lastMessage && (
                                             <span className={`text-[10px] sm:text-xs whitespace-nowrap ml-2 ${isUnread ? 'text-brand-400 font-medium' : 'text-dark-500'}`}>
-                                                {formatTime(lastMessage.CreatedAt)}
+                                                {formatTime(lastMessage.created_at)}
                                             </span>
                                         )}
                                     </div>
-                                    
+
                                     <p className={`text-xs sm:text-sm truncate ${isUnread ? 'text-dark-100 font-medium' : 'text-dark-400'}`}>
                                         {lastMessage ? (
                                             <>
-                                                {lastMessage.SenderID === currentUser.id && <span className="text-dark-500">{t('you')}: </span>}
-                                                {lastMessage.Content}
+                                                {lastMessage.sender_id === currentUser.id && <span className="text-dark-500">{t('you')}: </span>}
+                                                {lastMessage.content}
                                             </>
                                         ) : (
                                             <span className="italic text-dark-500">{t('tap_to_start_chatting')}</span>
@@ -162,9 +169,8 @@ function ChatList() {
                                     </p>
                                 </div>
 
-                                <ArrowRight className={`w-4 h-4 flex-shrink-0 transition-all opacity-0 group-hover:opacity-100 ${
-                                    isUnread ? 'text-brand-400' : 'text-dark-500'
-                                }`} />
+                                <ArrowRight className={`w-4 h-4 flex-shrink-0 transition-all opacity-0 group-hover:opacity-100 ${isUnread ? 'text-brand-400' : 'text-dark-500'
+                                    }`} />
                             </Link>
                         )
                     })}

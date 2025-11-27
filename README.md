@@ -12,12 +12,14 @@ A modern, real-time anonymous Q&A social platform where users can send and recei
 
 - **Anonymous Tells** - Send anonymous messages to any user
 - **Public Answers** - Answer tells publicly on your profile
-- **Real-time Updates** - WebSocket-powered instant notifications
+- **Real-time Chat** - Direct messaging with real-time updates via WebSocket
+- **Real-time Notifications** - Instant notifications for new tells and messages
 - **User Profiles** - Customizable profiles with avatars
-- **Follow System** - Follow users to see their public answers
-- **Multi-language** - Supports English, Arabic, and Kurdish
+- **Follow System** - Follow users anonymously or publicly
+- **Multi-language** - Supports English, Arabic, and Kurdish with full RTL support
 - **Email Verification** - Secure account registration
 - **Responsive Design** - Beautiful UI on all devices
+- **Dark Mode** - Modern dark theme optimized for all screen sizes
 
 ## Tech Stack
 
@@ -150,6 +152,16 @@ npm run dev
 | GET | `/api/public/tells/:username` | Get user's public tells |
 | GET | `/api/public/feed` | Get public feed |
 
+### Chats
+| Method | Endpoint | Description |
+|--------|----------|-------------|
+| POST | `/api/chats` | Create or get chat (protected) |
+| GET | `/api/chats` | Get all chats (protected) |
+| GET | `/api/chats/:chatId/messages` | Get chat messages (protected) |
+| POST | `/api/chats/:chatId/messages` | Send message (protected) |
+| PUT | `/api/chats/:chatId/read` | Mark messages as read (protected) |
+| GET | `/api/chats/unread-count` | Get unread messages count (protected) |
+
 ### WebSocket
 | Endpoint | Description |
 |----------|-------------|
@@ -201,12 +213,14 @@ PemBlle/
 ├── pemblle_backend/
 │   ├── handlers/          # HTTP request handlers
 │   │   ├── auth.go        # Authentication handlers
+│   │   ├── chat.go        # Chat/messaging handlers
 │   │   ├── tell.go        # Tell/message handlers
 │   │   └── user.go        # User handlers
 │   ├── middleware/        # Custom middleware
 │   │   └── auth.go        # JWT authentication
 │   ├── models/            # Database models
 │   │   └── models.go      # GORM models
+│   ├── utils/             # Utility functions
 │   ├── ws/                # WebSocket
 │   │   └── manager.go     # Connection manager
 │   ├── uploads/           # User uploads
@@ -217,7 +231,11 @@ PemBlle/
 │   ├── src/
 │   │   ├── components/    # React components
 │   │   ├── pages/         # Page components
-│   │   ├── locales/       # i18n translations
+│   │   │   ├── Chat/      # Chat components
+│   │   │   │   ├── ChatList.jsx
+│   │   │   │   └── ChatRoom.jsx
+│   │   │   └── ...
+│   │   ├── locales/       # i18n translations (en, ar, ku)
 │   │   ├── App.jsx
 │   │   └── main.jsx
 │   ├── Dockerfile

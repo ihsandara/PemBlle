@@ -8,6 +8,13 @@ function ChatRoom() {
     const { chatId } = useParams()
     const { t } = useTranslation()
     const navigate = useNavigate()
+
+    useEffect(() => {
+        if (chatId === 'undefined') {
+            navigate('/chat')
+        }
+    }, [chatId, navigate])
+
     const [messages, setMessages] = useState([])
     const [newMessage, setNewMessage] = useState('')
     const [otherUser, setOtherUser] = useState(null)
@@ -39,28 +46,28 @@ function ChatRoom() {
     const fetchChatData = async () => {
         try {
             const token = localStorage.getItem('token')
-            
+
             // Fetch messages
             const res = await axios.get(`/api/chats/${chatId}/messages`, {
                 headers: { Authorization: `Bearer ${token}` }
             })
             setMessages(res.data || [])
-            
+
             // Fetch chat list to get other user info
             const chatsRes = await axios.get('/api/chats', {
                 headers: { Authorization: `Bearer ${token}` }
             })
-            const chat = chatsRes.data?.find(c => c.ID === chatId)
+            const chat = chatsRes.data?.find(c => c.id === chatId)
             if (chat) {
-                const other = chat.User1ID === currentUser.id ? chat.User2 : chat.User1
+                const other = chat.user1_id === currentUser.id ? chat.user2 : chat.user1
                 setOtherUser(other)
             }
-            
+
             // Mark as read
             axios.put(`/api/chats/${chatId}/read`, {}, {
                 headers: { Authorization: `Bearer ${token}` }
-            }).catch(() => {})
-            
+            }).catch(() => { })
+
         } catch (err) {
             console.error('Failed to fetch chat:', err)
         } finally {
@@ -94,7 +101,7 @@ function ChatRoom() {
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             })
-            
+
             setMessages([...messages, res.data])
             setNewMessage('')
         } catch (err) {
@@ -124,13 +131,22 @@ function ChatRoom() {
                 <Link to="/chat" className="p-2 -ml-1 hover:bg-dark-700 rounded-xl text-dark-400 hover:text-white transition-colors">
                     <ArrowLeft className="w-5 h-5" />
                 </Link>
-                
+
                 {otherUser ? (
                     <Link to={`/u/${otherUser.username}`} className="flex items-center gap-3 flex-1 min-w-0 group">
                         <div className="relative flex-shrink-0">
                             <div className="w-10 h-10 sm:w-11 sm:h-11 rounded-full bg-gradient-to-br from-brand-500 to-purple-600 flex items-center justify-center overflow-hidden ring-2 ring-dark-700 group-hover:ring-brand-500/50 transition-all">
                                 {otherUser.avatar ? (
-                                    <img src={otherUser.avatar} alt="" className="w-full h-full object-cover" />
+                                    <img
+                                        src={otherUser.avatar}
+                                        alt=""
+                                        className="w-full h-full object-cover"
+                                        onError={(e) => {
+                                            e.target.onerror = null;
+                                            e.target.style.display = 'none';
+                                            e.target.parentElement.innerHTML = `<span class="text-white font-bold text-sm sm:text-base">${otherUser.username?.[0]?.toUpperCase()}</span>`;
+                                        }}
+                                    />
                                 ) : (
                                     <span className="text-white font-bold text-sm sm:text-base">
                                         {otherUser.username?.[0]?.toUpperCase()}
@@ -164,16 +180,25 @@ function ChatRoom() {
                     </div>
                 ) : (
                     messages.map((msg, index) => {
-                        const isMe = msg.SenderID === currentUser.id
-                        const showAvatar = !isMe && (index === 0 || messages[index - 1].SenderID !== msg.SenderID)
-                        
+                        const isMe = msg.sender_id === currentUser.id
+                        const showAvatar = !isMe && (index === 0 || messages[index - 1].sender_id !== msg.sender_id)
+
                         return (
-                            <div key={msg.ID} className={`flex ${isMe ? 'justify-end' : 'justify-start'}`}>
-                                <div className={`flex items-end max-w-[85%] sm:max-w-[75%] gap-2 ${isMe ? 'flex-row-reverse' : 'flex-row'}`}>
+                            <div key={msg.id} className="flex">
+                                <div className={`flex items-end max-w-[85%] sm:max-w-[75%] gap-2 ${isMe ? 'flex-row-reverse ms-auto' : 'flex-row me-auto'}`}>
                                     {!isMe && (
                                         <div className={`w-7 h-7 rounded-full bg-brand-600 flex-shrink-0 flex items-center justify-center overflow-hidden ${showAvatar ? 'opacity-100' : 'opacity-0'}`}>
                                             {otherUser?.avatar ? (
-                                                <img src={otherUser.avatar} alt="" className="w-full h-full object-cover" />
+                                                <img
+                                                    src={otherUser.avatar}
+                                                    alt=""
+                                                    className="w-full h-full object-cover"
+                                                    onError={(e) => {
+                                                        e.target.onerror = null;
+                                                        e.target.style.display = 'none';
+                                                        e.target.parentElement.innerHTML = `<span class="text-[10px] font-bold text-white">${otherUser.username?.[0]?.toUpperCase()}</span>`;
+                                                    }}
+                                                />
                                             ) : (
                                                 <span className="text-[10px] font-bold text-white">
                                                     {otherUser?.username?.[0]?.toUpperCase()}
@@ -184,16 +209,16 @@ function ChatRoom() {
 
                                     <div className={`
                                         px-3.5 py-2.5 rounded-2xl shadow-sm
-                                        ${isMe 
-                                            ? 'bg-gradient-to-br from-brand-600 to-purple-600 text-white rounded-br-md' 
-                                            : 'bg-dark-800 text-dark-100 rounded-bl-md border border-dark-700'
+                                        ${isMe
+                                            ? 'bg-gradient-to-br from-brand-600 to-purple-600 text-white rounded-ee-md'
+                                            : 'bg-dark-800 text-dark-100 rounded-es-md border border-dark-700'
                                         }
                                     `}>
                                         <p className="text-sm leading-relaxed whitespace-pre-wrap break-words">
-                                            {msg.Content}
+                                            {msg.content}
                                         </p>
                                         <p className={`text-[10px] mt-1 text-right ${isMe ? 'text-white/60' : 'text-dark-500'}`}>
-                                            {formatTime(msg.CreatedAt)}
+                                            {formatTime(msg.created_at)}
                                             {isMe && (
                                                 <span className="ml-1">
                                                     {msg.is_read ? '✓✓' : '✓'}
@@ -227,8 +252,8 @@ function ChatRoom() {
                             rows="1"
                         />
                     </div>
-                    <button 
-                        type="submit" 
+                    <button
+                        type="submit"
                         disabled={!newMessage.trim() || sending}
                         className="p-3 rounded-xl bg-gradient-to-r from-brand-600 to-purple-600 text-white hover:from-brand-500 hover:to-purple-500 disabled:opacity-50 disabled:hover:from-brand-600 disabled:hover:to-purple-600 transition-all flex-shrink-0 shadow-lg shadow-brand-500/20"
                     >

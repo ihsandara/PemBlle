@@ -11,6 +11,7 @@ const Navbar = () => {
     const [user, setUser] = useState(null);
     const [showDropdown, setShowDropdown] = useState(false);
     const [unreadCount, setUnreadCount] = useState(0);
+    const [unreadChatCount, setUnreadChatCount] = useState(0);
     const isAuthPage = ['/login', '/register', '/verify', '/verify-request'].includes(location.pathname);
 
     useEffect(() => {
@@ -23,17 +24,29 @@ const Navbar = () => {
                 const parsedUser = JSON.parse(userData);
                 setUser(parsedUser);
 
-                // Fetch unread count
+                // Fetch unread tells count
                 fetch('/api/tells/unread-count', {
                     headers: { 'Authorization': `Bearer ${token}` }
                 })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.count !== undefined) {
-                        setUnreadCount(data.count);
-                    }
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.count !== undefined) {
+                            setUnreadCount(data.count);
+                        }
+                    })
+                    .catch(err => console.error('Failed to fetch unread count:', err));
+
+                // Fetch unread chats count
+                fetch('/api/chats/unread-count', {
+                    headers: { 'Authorization': `Bearer ${token}` }
                 })
-                .catch(err => console.error('Failed to fetch unread count:', err));
+                    .then(res => res.json())
+                    .then(data => {
+                        if (data.count !== undefined) {
+                            setUnreadChatCount(data.count);
+                        }
+                    })
+                    .catch(err => console.error('Failed to fetch unread chat count:', err));
 
                 // WebSocket for real-time updates
                 ws = new WebSocket(`ws://localhost:8080/ws/${parsedUser.id}`);
@@ -41,6 +54,8 @@ const Navbar = () => {
                     const data = JSON.parse(event.data);
                     if (data.type === 'new_tell') {
                         setUnreadCount(prev => prev + 1);
+                    } else if (data.type === 'new_message') {
+                        setUnreadChatCount(prev => prev + 1);
                     }
                 };
 
@@ -51,6 +66,7 @@ const Navbar = () => {
         } else {
             setUser(null);
             setUnreadCount(0);
+            setUnreadChatCount(0);
         }
 
         return () => {
@@ -103,10 +119,15 @@ const Navbar = () => {
                                     )}
                                 </Link>
 
-                                <Link to="/chat" className="p-2.5 text-dark-400 hover:text-dark-100 hover:bg-dark-800 rounded-lg transition-colors" title={t('messages')}>
+                                <Link to="/chat" className="relative p-2.5 text-dark-400 hover:text-dark-100 hover:bg-dark-800 rounded-lg transition-colors" title={t('messages')}>
                                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 10h.01M12 10h.01M16 10h.01M9 16H5a2 2 0 01-2-2V6a2 2 0 012-2h14a2 2 0 012 2v8a2 2 0 01-2 2h-5l-5 5v-5z" />
                                     </svg>
+                                    {unreadChatCount > 0 && (
+                                        <span className="absolute top-1 right-1 w-4 h-4 bg-brand-500 text-white text-[10px] rounded-full flex items-center justify-center font-bold">
+                                            {unreadChatCount > 9 ? '9+' : unreadChatCount}
+                                        </span>
+                                    )}
                                 </Link>
 
                                 <div className="relative">

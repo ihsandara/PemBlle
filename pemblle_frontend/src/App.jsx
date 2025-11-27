@@ -32,9 +32,9 @@ function App() {
 
   return (
     <Router>
-      <div className="min-h-screen bg-dark-950 text-dark-100">
+      <div className="min-h-screen bg-dark-950 text-dark-100 flex flex-col">
         <Navbar />
-        <div className="pt-20 pb-10 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto">
+        <div className="pt-20 pb-10 px-4 sm:px-6 lg:px-8 max-w-6xl mx-auto flex-grow w-full">
           <Routes>
             {/* Public routes */}
             <Route path="/login" element={<Login />} />
@@ -44,13 +44,13 @@ function App() {
             <Route path="/policy" element={<Policy />} />
             <Route path="/terms" element={<Terms />} />
             <Route path="/u/:username" element={<PublicProfile />} />
-            
+
             {/* Home - Landing for guests, Home for logged users */}
             <Route path="/" element={<HomePage />} />
             <Route path="/profile" element={<ProtectedRoute><Profile /></ProtectedRoute>} />
             <Route path="/notifications" element={<ProtectedRoute><Notifications /></ProtectedRoute>} />
             <Route path="/users" element={<ProtectedRoute><Users /></ProtectedRoute>} />
-            
+
             {/* Chat Routes */}
             <Route path="/chat" element={<ProtectedRoute><ChatList /></ProtectedRoute>} />
             <Route path="/chat/:chatId" element={<ProtectedRoute><ChatRoom /></ProtectedRoute>} />

@@ -28,10 +28,10 @@ function PublicProfile() {
     const [expandedReplies, setExpandedReplies] = useState({})
     const [showShareModal, setShowShareModal] = useState(false)
     const [isChatting, setIsChatting] = useState(false)
-    
+
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
     const profileLink = window.location.href
-    
+
     const toggleReplies = (tellId) => {
         setExpandedReplies(prev => ({ ...prev, [tellId]: !prev[tellId] }))
     }
@@ -49,11 +49,11 @@ function PublicProfile() {
             ])
             setUser(userRes.data)
             setTells(tellsRes.data || [])
-            
+
             // Fetch follow counts
             const countsRes = await axios.get(`/api/users/${userRes.data.id}/follow-counts`)
             setFollowCounts(countsRes.data)
-            
+
             // Check follow status if logged in
             const token = localStorage.getItem('token')
             if (token && !isOwnProfile) {
@@ -63,7 +63,7 @@ function PublicProfile() {
                     })
                     setIsFollowing(statusRes.data.is_following)
                     setFollowAnonymous(statusRes.data.is_anonymous || false)
-                } catch (e) {}
+                } catch (e) { }
             }
         } catch (err) {
             console.error(err)
@@ -74,7 +74,7 @@ function PublicProfile() {
 
     const handleStartChat = async () => {
         if (!user) return
-        
+
         setIsChatting(true)
         try {
             const token = localStorage.getItem('token')
@@ -83,7 +83,7 @@ function PublicProfile() {
             }, {
                 headers: { Authorization: `Bearer ${token}` }
             })
-            navigate(`/chat/${res.data.ID}`)
+            navigate(`/chat/${res.data.id}`)
         } catch (err) {
             console.error('Failed to start chat:', err)
             setMessage({ type: 'error', text: t('failed_start_chat') })
@@ -95,7 +95,7 @@ function PublicProfile() {
     const handleFollow = async () => {
         const token = localStorage.getItem('token')
         if (!token) return
-        
+
         setFollowLoading(true)
         try {
             if (isFollowing) {
@@ -194,10 +194,10 @@ function PublicProfile() {
                     <div className="absolute inset-0 bg-[url('data:image/svg+xml,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20viewBox%3D%220%200%2060%2060%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cg%20fill%3D%22none%22%20fill-rule%3D%22evenodd%22%3E%3Cg%20fill%3D%22%23ffffff%22%20fill-opacity%3D%220.05%22%3E%3Cpath%20d%3D%22M36%2034v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6%2034v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6%204V0H4v4H0v2h4v4h2V6h4V4H6z%22%2F%3E%3C%2Fg%3E%3C%2Fg%3E%3C%2Fsvg%3E')] opacity-50"></div>
                     <div className="absolute -bottom-8 -right-8 w-32 h-32 bg-white/10 rounded-full blur-2xl"></div>
                     <div className="absolute -top-8 -left-8 w-24 h-24 bg-white/10 rounded-full blur-xl"></div>
-                    
+
                     {/* Share Button */}
-                    <button 
-                        onClick={() => setShowShareModal(true)} 
+                    <button
+                        onClick={() => setShowShareModal(true)}
                         className="absolute top-4 right-4 p-2.5 bg-white/20 backdrop-blur-sm text-white hover:bg-white/30 rounded-xl transition-all group"
                         title={t('share_profile')}
                     >
@@ -232,18 +232,18 @@ function PublicProfile() {
                         {user.is_verified && <BadgeCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-400 flex-shrink-0" />}
                     </h1>
                     <p className="text-brand-400 font-medium mb-4 text-sm sm:text-base">@{user.username}</p>
-                    
+
                     {/* Bio */}
                     {user.bio && (
                         <div className="max-w-sm mx-auto mb-5 px-2 sm:px-0">
                             <p className="text-dark-300 text-xs sm:text-sm leading-relaxed whitespace-pre-line break-words">{user.bio}</p>
                         </div>
                     )}
-                
+
                     {/* Stats Cards */}
                     <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5 px-2 sm:px-0">
-                        <button 
-                            onClick={fetchFollowers} 
+                        <button
+                            onClick={fetchFollowers}
                             className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-dark-800/50 border border-dark-700 hover:border-brand-500/50 hover:bg-dark-800 transition-all group"
                         >
                             <div className="flex items-center justify-center gap-1 sm:gap-2 mb-0.5 sm:mb-1">
@@ -252,8 +252,8 @@ function PublicProfile() {
                             </div>
                             <div className="text-[10px] sm:text-xs text-dark-400 truncate">{t('followers')}</div>
                         </button>
-                        <button 
-                            onClick={fetchFollowing} 
+                        <button
+                            onClick={fetchFollowing}
                             className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-dark-800/50 border border-dark-700 hover:border-brand-500/50 hover:bg-dark-800 transition-all group"
                         >
                             <div className="flex items-center justify-center gap-1 sm:gap-2 mb-0.5 sm:mb-1">
@@ -270,7 +270,7 @@ function PublicProfile() {
                             <div className="text-[10px] sm:text-xs text-dark-400 truncate">{t('answered_tells')}</div>
                         </div>
                     </div>
-                
+
                     {/* Follow Button & Chat */}
                     {!isOwnProfile && localStorage.getItem('token') && (
                         <div className="space-y-3">
@@ -278,11 +278,10 @@ function PublicProfile() {
                                 <button
                                     onClick={handleFollow}
                                     disabled={followLoading}
-                                    className={`px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl font-semibold transition-all ${
-                                        isFollowing 
-                                            ? 'bg-dark-800 text-dark-200 hover:bg-red-500/20 hover:text-red-400 border border-dark-700' 
+                                    className={`px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl font-semibold transition-all ${isFollowing
+                                            ? 'bg-dark-800 text-dark-200 hover:bg-red-500/20 hover:text-red-400 border border-dark-700'
                                             : 'bg-gradient-to-r from-brand-600 to-purple-600 text-white hover:from-brand-500 hover:to-purple-500 shadow-lg shadow-brand-500/25'
-                                    }`}
+                                        }`}
                                 >
                                     {followLoading ? (
                                         <span className="flex items-center justify-center gap-2">
@@ -309,25 +308,22 @@ function PublicProfile() {
                                     )}
                                 </button>
                             </div>
-                            
+
                             {!isFollowing && (
-                                <div 
+                                <div
                                     onClick={() => setFollowAnonymous(!followAnonymous)}
-                                    className={`inline-flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl cursor-pointer transition-all duration-300 ${
-                                        followAnonymous 
-                                            ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/40' 
+                                    className={`inline-flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl cursor-pointer transition-all duration-300 ${followAnonymous
+                                            ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/40'
                                             : 'bg-dark-800/60 border border-dark-700 hover:border-dark-600'
-                                    }`}
+                                        }`}
                                 >
                                     {/* Custom Toggle Switch */}
-                                    <div className={`relative w-9 h-5 sm:w-11 sm:h-6 rounded-full transition-all duration-300 flex-shrink-0 ${
-                                        followAnonymous 
-                                            ? 'bg-gradient-to-r from-purple-500 to-pink-500' 
+                                    <div className={`relative w-9 h-5 sm:w-11 sm:h-6 rounded-full transition-all duration-300 flex-shrink-0 ${followAnonymous
+                                            ? 'bg-gradient-to-r from-purple-500 to-pink-500'
                                             : 'bg-dark-700'
-                                    }`}>
-                                        <div className={`absolute top-0.5 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white shadow-lg transition-all duration-300 flex items-center justify-center ${
-                                            followAnonymous ? 'left-[18px] sm:left-[22px]' : 'left-0.5'
                                         }`}>
+                                        <div className={`absolute top-0.5 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white shadow-lg transition-all duration-300 flex items-center justify-center ${followAnonymous ? 'left-[18px] sm:left-[22px]' : 'left-0.5'
+                                            }`}>
                                             {followAnonymous ? (
                                                 <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                                     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
@@ -339,7 +335,7 @@ function PublicProfile() {
                                             )}
                                         </div>
                                     </div>
-                                    
+
                                     {/* Label with Icon */}
                                     <div className="flex items-center gap-1.5 sm:gap-2">
                                         <svg className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-colors flex-shrink-0 ${followAnonymous ? 'text-purple-400' : 'text-dark-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -353,7 +349,7 @@ function PublicProfile() {
                             )}
                         </div>
                     )}
-                    
+
                     {isOwnProfile && (
                         <Link to="/profile" className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-dark-800 text-dark-200 font-medium hover:bg-dark-700 transition-colors border border-dark-700">
                             <Sparkles className="w-4 h-4" />
@@ -362,7 +358,7 @@ function PublicProfile() {
                     )}
                 </div>
             </div>
-            
+
             {/* Followers Modal */}
             {showFollowersModal && (
                 <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center sm:p-4 backdrop-blur-sm" onClick={() => setShowFollowersModal(false)}>
@@ -510,9 +506,9 @@ function PublicProfile() {
             )}
 
             {/* Share Modal */}
-            <ShareModal 
-                isOpen={showShareModal} 
-                onClose={() => setShowShareModal(false)} 
+            <ShareModal
+                isOpen={showShareModal}
+                onClose={() => setShowShareModal(false)}
                 profileLink={profileLink}
                 user={user}
             />
@@ -600,7 +596,7 @@ function PublicProfile() {
                                             </svg>
                                             {tell.answer.replies.length} {tell.answer.replies.length === 1 ? t('reply') : t('replies')}
                                         </div>
-                                        
+
                                         {(expandedReplies[tell.id] ? tell.answer.replies : tell.answer.replies.slice(0, 3)).map((reply) => {
                                             const isFromReceiver = reply.sender_id === tell.receiver?.id || reply.sender_id === user.id;
                                             return (
@@ -629,9 +625,9 @@ function PublicProfile() {
                                                 </div>
                                             );
                                         })}
-                                        
+
                                         {tell.answer.replies.length > 3 && (
-                                            <button 
+                                            <button
                                                 onClick={() => toggleReplies(tell.id)}
                                                 className="text-xs text-brand-400 hover:text-brand-300 transition-colors flex items-center gap-1"
                                             >
