@@ -5,6 +5,7 @@ import (
 	"log"
 	"path/filepath"
 	"prswjo/models"
+	"prswjo/utils"
 
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
@@ -179,6 +180,40 @@ func (h *UserHandler) FollowUser(c *fiber.Ctx) error {
 	if result := h.DB.Create(&follow); result.Error != nil {
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not follow user"})
 	}
+
+	// Send notification email to the followed user
+	go func() {
+		// Get the followed user's email
+		var followedUser models.User
+		if err := h.DB.First(&followedUser, "id = ?", followingID).Error; err != nil {
+			log.Printf("❌ Could not find followed user for notification: %v", err)
+			return
+		}
+
+		// Get follower's name (only if not anonymous)
+		var followerName string
+		if !input.IsAnonymous {
+			var follower models.User
+			if err := h.DB.First(&follower, "id = ?", followerID).Error; err == nil {
+				if follower.FullName != "" {
+					followerName = follower.FullName
+				} else {
+					followerName = follower.Username
+				}
+			}
+		}
+
+		// Send the email
+		if err := utils.SendNewFollowerEmail(followedUser.Email, followerName, input.IsAnonymous); err != nil {
+			log.Printf("❌ Failed to send follower notification email: %v", err)
+		} else {
+			if input.IsAnonymous {
+				log.Printf("📧 Sent anonymous follower notification to %s", followedUser.Email)
+			} else {
+				log.Printf("📧 Sent follower notification to %s (from %s)", followedUser.Email, followerName)
+			}
+		}
+	}()
 
 	return c.JSON(fiber.Map{"message": "Followed successfully", "is_anonymous": input.IsAnonymous})
 }

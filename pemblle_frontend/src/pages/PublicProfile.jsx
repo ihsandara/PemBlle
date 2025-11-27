@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react'
-import { useParams, Link } from 'react-router-dom'
+import { useParams, Link, useNavigate } from 'react-router-dom'
 import { useTranslation } from 'react-i18next'
 import axios from 'axios'
 import { Share2, MessageCircle, BadgeCheck, Sparkles, Send, Users, Heart } from 'lucide-react'
@@ -7,6 +7,7 @@ import ShareModal from '../components/ShareModal'
 
 function PublicProfile() {
     const { username } = useParams()
+    const navigate = useNavigate()
     const { t } = useTranslation()
     const [user, setUser] = useState(null)
     const [tells, setTells] = useState([])
@@ -26,6 +27,7 @@ function PublicProfile() {
     const [followingAnonymousCount, setFollowingAnonymousCount] = useState(0)
     const [expandedReplies, setExpandedReplies] = useState({})
     const [showShareModal, setShowShareModal] = useState(false)
+    const [isChatting, setIsChatting] = useState(false)
     
     const currentUser = JSON.parse(localStorage.getItem('user') || '{}')
     const profileLink = window.location.href
@@ -67,6 +69,26 @@ function PublicProfile() {
             console.error(err)
         } finally {
             setLoading(false)
+        }
+    }
+
+    const handleStartChat = async () => {
+        if (!user) return
+        
+        setIsChatting(true)
+        try {
+            const token = localStorage.getItem('token')
+            const res = await axios.post('/api/chat', {
+                user_id: user.id
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            navigate(`/chat/${res.data.ID}`)
+        } catch (err) {
+            console.error('Failed to start chat:', err)
+            alert('Failed to start chat')
+        } finally {
+            setIsChatting(false)
         }
     }
 
@@ -125,7 +147,9 @@ function PublicProfile() {
         setSending(true)
         try {
             const token = localStorage.getItem('token')
-            await axios.post('/api/tells/', {
+            // Use public endpoint for anonymous users, protected endpoint for logged-in users
+            const endpoint = token ? '/api/tells/' : '/api/public/tells'
+            await axios.post(endpoint, {
                 receiver_id: user.id,
                 content: tellContent,
                 is_anonymous: true
@@ -203,84 +227,129 @@ function PublicProfile() {
                     </div>
 
                     {/* Name & Username */}
-                    <h1 className="text-xl sm:text-2xl font-bold text-white mb-1 flex items-center justify-center gap-2">
-                        {user.full_name || user.username}
-                        {user.is_verified && <BadgeCheck className="w-5 h-5 text-brand-400" />}
+                    <h1 className="text-lg sm:text-2xl font-bold text-white mb-1 flex items-center justify-center gap-2 flex-wrap px-2">
+                        <span className="truncate max-w-[200px] sm:max-w-none">{user.full_name || user.username}</span>
+                        {user.is_verified && <BadgeCheck className="w-4 h-4 sm:w-5 sm:h-5 text-brand-400 flex-shrink-0" />}
                     </h1>
-                    <p className="text-brand-400 font-medium mb-4">@{user.username}</p>
+                    <p className="text-brand-400 font-medium mb-4 text-sm sm:text-base">@{user.username}</p>
                     
                     {/* Bio */}
                     {user.bio && (
-                        <div className="max-w-sm mx-auto mb-5">
-                            <p className="text-dark-300 text-sm leading-relaxed whitespace-pre-line">{user.bio}</p>
+                        <div className="max-w-sm mx-auto mb-5 px-2 sm:px-0">
+                            <p className="text-dark-300 text-xs sm:text-sm leading-relaxed whitespace-pre-line break-words">{user.bio}</p>
                         </div>
                     )}
                 
                     {/* Stats Cards */}
-                    <div className="flex justify-center gap-3 mb-5">
+                    <div className="grid grid-cols-3 gap-2 sm:gap-3 mb-5 px-2 sm:px-0">
                         <button 
                             onClick={fetchFollowers} 
-                            className="flex-1 max-w-[140px] p-3 rounded-2xl bg-dark-800/50 border border-dark-700 hover:border-brand-500/50 hover:bg-dark-800 transition-all group"
+                            className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-dark-800/50 border border-dark-700 hover:border-brand-500/50 hover:bg-dark-800 transition-all group"
                         >
-                            <div className="flex items-center justify-center gap-2 mb-1">
-                                <Users className="w-4 h-4 text-brand-400" />
-                                <span className="text-lg font-bold text-white group-hover:text-brand-400 transition-colors">{followCounts.followers_count}</span>
+                            <div className="flex items-center justify-center gap-1 sm:gap-2 mb-0.5 sm:mb-1">
+                                <Users className="w-3 h-3 sm:w-4 sm:h-4 text-brand-400" />
+                                <span className="text-base sm:text-lg font-bold text-white group-hover:text-brand-400 transition-colors">{followCounts.followers_count}</span>
                             </div>
-                            <div className="text-xs text-dark-400">{t('followers')}</div>
+                            <div className="text-[10px] sm:text-xs text-dark-400 truncate">{t('followers')}</div>
                         </button>
                         <button 
                             onClick={fetchFollowing} 
-                            className="flex-1 max-w-[140px] p-3 rounded-2xl bg-dark-800/50 border border-dark-700 hover:border-brand-500/50 hover:bg-dark-800 transition-all group"
+                            className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-dark-800/50 border border-dark-700 hover:border-brand-500/50 hover:bg-dark-800 transition-all group"
                         >
-                            <div className="flex items-center justify-center gap-2 mb-1">
-                                <Heart className="w-4 h-4 text-pink-400" />
-                                <span className="text-lg font-bold text-white group-hover:text-pink-400 transition-colors">{followCounts.following_count}</span>
+                            <div className="flex items-center justify-center gap-1 sm:gap-2 mb-0.5 sm:mb-1">
+                                <Heart className="w-3 h-3 sm:w-4 sm:h-4 text-pink-400" />
+                                <span className="text-base sm:text-lg font-bold text-white group-hover:text-pink-400 transition-colors">{followCounts.following_count}</span>
                             </div>
-                            <div className="text-xs text-dark-400">{t('following')}</div>
+                            <div className="text-[10px] sm:text-xs text-dark-400 truncate">{t('following')}</div>
                         </button>
-                        <div className="flex-1 max-w-[140px] p-3 rounded-2xl bg-dark-800/50 border border-dark-700">
-                            <div className="flex items-center justify-center gap-2 mb-1">
-                                <MessageCircle className="w-4 h-4 text-purple-400" />
-                                <span className="text-lg font-bold text-white">{tells.length}</span>
+                        <div className="p-2 sm:p-3 rounded-xl sm:rounded-2xl bg-dark-800/50 border border-dark-700">
+                            <div className="flex items-center justify-center gap-1 sm:gap-2 mb-0.5 sm:mb-1">
+                                <MessageCircle className="w-3 h-3 sm:w-4 sm:h-4 text-purple-400" />
+                                <span className="text-base sm:text-lg font-bold text-white">{tells.length}</span>
                             </div>
-                            <div className="text-xs text-dark-400">{t('answered_tells')}</div>
+                            <div className="text-[10px] sm:text-xs text-dark-400 truncate">{t('answered_tells')}</div>
                         </div>
                     </div>
                 
-                    {/* Follow Button */}
+                    {/* Follow Button & Chat */}
                     {!isOwnProfile && localStorage.getItem('token') && (
                         <div className="space-y-3">
-                            <button
-                                onClick={handleFollow}
-                                disabled={followLoading}
-                                className={`w-full sm:w-auto px-8 py-3 rounded-xl font-semibold transition-all ${
-                                    isFollowing 
-                                        ? 'bg-dark-800 text-dark-200 hover:bg-red-500/20 hover:text-red-400 border border-dark-700' 
-                                        : 'bg-gradient-to-r from-brand-600 to-purple-600 text-white hover:from-brand-500 hover:to-purple-500 shadow-lg shadow-brand-500/25'
-                                }`}
-                            >
-                                {followLoading ? (
-                                    <span className="flex items-center justify-center gap-2">
-                                        <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
-                                    </span>
-                                ) : isFollowing ? t('unfollow') : (
-                                    <span className="flex items-center justify-center gap-2">
-                                        <Users className="w-4 h-4" />
-                                        {t('follow')}
-                                    </span>
-                                )}
-                            </button>
+                            <div className="flex items-center justify-center gap-2 sm:gap-3">
+                                <button
+                                    onClick={handleFollow}
+                                    disabled={followLoading}
+                                    className={`px-6 sm:px-8 py-2.5 sm:py-3 rounded-xl font-semibold transition-all ${
+                                        isFollowing 
+                                            ? 'bg-dark-800 text-dark-200 hover:bg-red-500/20 hover:text-red-400 border border-dark-700' 
+                                            : 'bg-gradient-to-r from-brand-600 to-purple-600 text-white hover:from-brand-500 hover:to-purple-500 shadow-lg shadow-brand-500/25'
+                                    }`}
+                                >
+                                    {followLoading ? (
+                                        <span className="flex items-center justify-center gap-2">
+                                            <span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></span>
+                                        </span>
+                                    ) : isFollowing ? t('unfollow') : (
+                                        <span className="flex items-center justify-center gap-2">
+                                            <Users className="w-4 h-4" />
+                                            {t('follow')}
+                                        </span>
+                                    )}
+                                </button>
+
+                                <button
+                                    onClick={handleStartChat}
+                                    disabled={isChatting}
+                                    className="px-4 py-2.5 sm:py-3 rounded-xl bg-dark-800 text-dark-200 font-medium hover:bg-dark-700 hover:text-white transition-all border border-dark-700"
+                                    title={t('send_message')}
+                                >
+                                    {isChatting ? (
+                                        <span className="w-5 h-5 block border-2 border-dark-400/30 border-t-dark-400 rounded-full animate-spin"></span>
+                                    ) : (
+                                        <MessageCircle className="w-5 h-5" />
+                                    )}
+                                </button>
+                            </div>
                             
                             {!isFollowing && (
-                                <label className="flex items-center justify-center gap-2 text-sm text-dark-400 cursor-pointer hover:text-dark-300 transition-colors">
-                                    <input
-                                        type="checkbox"
-                                        checked={followAnonymous}
-                                        onChange={(e) => setFollowAnonymous(e.target.checked)}
-                                        className="w-4 h-4 rounded border-dark-600 bg-dark-800 text-brand-600 focus:ring-brand-500"
-                                    />
-                                    {t('follow_anonymously')}
-                                </label>
+                                <div 
+                                    onClick={() => setFollowAnonymous(!followAnonymous)}
+                                    className={`inline-flex items-center gap-2 sm:gap-3 px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl cursor-pointer transition-all duration-300 ${
+                                        followAnonymous 
+                                            ? 'bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/40' 
+                                            : 'bg-dark-800/60 border border-dark-700 hover:border-dark-600'
+                                    }`}
+                                >
+                                    {/* Custom Toggle Switch */}
+                                    <div className={`relative w-9 h-5 sm:w-11 sm:h-6 rounded-full transition-all duration-300 flex-shrink-0 ${
+                                        followAnonymous 
+                                            ? 'bg-gradient-to-r from-purple-500 to-pink-500' 
+                                            : 'bg-dark-700'
+                                    }`}>
+                                        <div className={`absolute top-0.5 w-4 h-4 sm:w-5 sm:h-5 rounded-full bg-white shadow-lg transition-all duration-300 flex items-center justify-center ${
+                                            followAnonymous ? 'left-[18px] sm:left-[22px]' : 'left-0.5'
+                                        }`}>
+                                            {followAnonymous ? (
+                                                <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-purple-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
+                                                </svg>
+                                            ) : (
+                                                <svg className="w-2.5 h-2.5 sm:w-3 sm:h-3 text-dark-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" />
+                                                </svg>
+                                            )}
+                                        </div>
+                                    </div>
+                                    
+                                    {/* Label with Icon */}
+                                    <div className="flex items-center gap-1.5 sm:gap-2">
+                                        <svg className={`w-3.5 h-3.5 sm:w-4 sm:h-4 transition-colors flex-shrink-0 ${followAnonymous ? 'text-purple-400' : 'text-dark-500'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                        </svg>
+                                        <span className={`text-xs sm:text-sm font-medium transition-colors ${followAnonymous ? 'text-purple-300' : 'text-dark-400'}`}>
+                                            {t('follow_anonymously')}
+                                        </span>
+                                    </div>
+                                </div>
                             )}
                         </div>
                     )}
@@ -296,11 +365,15 @@ function PublicProfile() {
             
             {/* Followers Modal */}
             {showFollowersModal && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setShowFollowersModal(false)}>
-                    <div className="bg-dark-900 rounded-2xl w-full max-w-md max-h-[80vh] overflow-hidden shadow-xl border border-dark-700" onClick={e => e.stopPropagation()}>
-                        <div className="p-4 border-b border-dark-800 flex justify-between items-center bg-dark-800/50">
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center sm:p-4 backdrop-blur-sm" onClick={() => setShowFollowersModal(false)}>
+                    <div className="bg-dark-900 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] sm:max-h-[80vh] overflow-hidden shadow-xl border-t sm:border border-dark-700" onClick={e => e.stopPropagation()}>
+                        {/* Mobile drag handle */}
+                        <div className="sm:hidden flex justify-center pt-3 pb-1">
+                            <div className="w-10 h-1 bg-dark-600 rounded-full"></div>
+                        </div>
+                        <div className="p-4 pt-2 sm:pt-4 border-b border-dark-800 flex justify-between items-center bg-dark-800/50">
                             <div className="flex items-center gap-2">
-                                <h3 className="font-semibold text-dark-100">{t('followers')}</h3>
+                                <h3 className="font-semibold text-dark-100 text-sm sm:text-base">{t('followers')}</h3>
                                 <span className="px-2 py-0.5 rounded-full bg-dark-700 text-xs text-dark-400 font-medium">{followers.length + followersAnonymousCount}</span>
                             </div>
                             <button onClick={() => setShowFollowersModal(false)} className="text-dark-400 hover:text-dark-100 p-1 rounded-lg hover:bg-dark-700 transition-colors">
@@ -365,11 +438,15 @@ function PublicProfile() {
 
             {/* Following Modal */}
             {showFollowingModal && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4 backdrop-blur-sm" onClick={() => setShowFollowingModal(false)}>
-                    <div className="bg-dark-900 rounded-2xl w-full max-w-md max-h-[80vh] overflow-hidden shadow-xl border border-dark-700" onClick={e => e.stopPropagation()}>
-                        <div className="p-4 border-b border-dark-800 flex justify-between items-center bg-dark-800/50">
+                <div className="fixed inset-0 bg-black/50 z-50 flex items-end sm:items-center justify-center sm:p-4 backdrop-blur-sm" onClick={() => setShowFollowingModal(false)}>
+                    <div className="bg-dark-900 rounded-t-2xl sm:rounded-2xl w-full sm:max-w-md max-h-[85vh] sm:max-h-[80vh] overflow-hidden shadow-xl border-t sm:border border-dark-700" onClick={e => e.stopPropagation()}>
+                        {/* Mobile drag handle */}
+                        <div className="sm:hidden flex justify-center pt-3 pb-1">
+                            <div className="w-10 h-1 bg-dark-600 rounded-full"></div>
+                        </div>
+                        <div className="p-4 pt-2 sm:pt-4 border-b border-dark-800 flex justify-between items-center bg-dark-800/50">
                             <div className="flex items-center gap-2">
-                                <h3 className="font-semibold text-dark-100">{t('following')}</h3>
+                                <h3 className="font-semibold text-dark-100 text-sm sm:text-base">{t('following')}</h3>
                                 <span className="px-2 py-0.5 rounded-full bg-dark-700 text-xs text-dark-400 font-medium">{following.length + followingAnonymousCount}</span>
                             </div>
                             <button onClick={() => setShowFollowingModal(false)} className="text-dark-400 hover:text-dark-100 p-1 rounded-lg hover:bg-dark-700 transition-colors">
@@ -441,8 +518,8 @@ function PublicProfile() {
             />
 
             {/* Send Tell */}
-            <div className="card">
-                <h2 className="font-semibold text-dark-100 mb-4">{t('send_anonymous_tell')}</h2>
+            <div className="card mx-2 sm:mx-0">
+                <h2 className="font-semibold text-dark-100 mb-3 sm:mb-4 text-sm sm:text-base">{t('send_anonymous_tell')}</h2>
                 {message.text && (
                     <div className={`p-3 mb-4 rounded-xl text-sm ${message.type === 'success' ? 'bg-green-500/10 text-green-400 border border-green-500/20' : 'bg-red-500/10 text-red-400 border border-red-500/20'}`}>
                         {message.text}
@@ -464,8 +541,8 @@ function PublicProfile() {
             </div>
 
             {/* Answered Tells */}
-            <div>
-                <h2 className="font-semibold text-dark-100 mb-4">{t('answered_tells')}</h2>
+            <div className="px-2 sm:px-0">
+                <h2 className="font-semibold text-dark-100 mb-3 sm:mb-4 text-sm sm:text-base">{t('answered_tells')}</h2>
                 {(!tells || tells.length === 0) ? (
                     <div className="card text-center py-10 sm:py-12">
                         <div className="text-3xl sm:text-4xl mb-3">📭</div>

@@ -163,5 +163,22 @@
     "privacy_opensource_title": "Verify Our Practices",
     "privacy_opensource_content": "PemBlle is fully open source. You can review our entire codebase to verify exactly how your data is handled and stored.",
     "view_source_code": "View Source Code",
-    "back_to_home": "Back to Home"
+    "back_to_home": "Back to Home",
+    "terms_conditions": "Terms & Conditions",
+    "terms_title": "Terms of Service",
+    "terms_subtitle": "Please read these terms carefully before using our service.",
+    "terms_intro_title": "Acceptance of Terms",
+    "terms_intro_content": "By accessing or using PemBlle, you agree to be bound by these Terms. If you disagree with any part of the terms, then you may not access the service.",
+    "terms_account": "Accounts",
+    "terms_account_content": "• You must provide accurate and complete information when creating an account\n• You are responsible for safeguarding your password\n• You must notify us immediately of any unauthorized use of your account\n• We reserve the right to terminate accounts that violate our terms",
+    "terms_content": "User Content",
+    "terms_content_content": "• You retain ownership of content you post\n• By posting content, you grant us a license to use, display, and distribute it\n• You agree not to post content that is illegal, offensive, or violates rights\n• We reserve the right to remove any content at our discretion",
+    "terms_conduct": "Prohibited Conduct",
+    "terms_conduct_content": "• Harassment, bullying, or threatening behavior is strictly prohibited\n• Spamming or sending unsolicited messages is not allowed\n• Impersonating others or providing false information is forbidden\n• Attempting to interfere with the service's security is prohibited",
+    "terms_safety": "Safety & Security",
+    "terms_safety_content": "• We strive to keep PemBlle safe, but cannot guarantee it\n• You are responsible for your interactions with other users\n• Report any suspicious or abusive behavior immediately\n• We may work with law enforcement if illegal activity is detected",
+    "terms_rights": "Intellectual Property",
+    "terms_rights_content": "• The service and its original content are protected by copyright\n• Our open source code is licensed under the MIT License\n• You may not use our trademarks without prior written permission",
+    "terms_disclaimer": "Disclaimer",
+    "terms_disclaimer_content": "• The service is provided 'AS IS' without warranties of any kind\n• We are not responsible for any damages resulting from your use of the service\n• We do not guarantee that the service will be uninterrupted or error-free"
 }

@@ -65,6 +65,56 @@ func (h *TellHandler) CreateTell(c *fiber.Ctx) error {
 	return c.JSON(tell)
 }
 
+// CreatePublicTell allows anonymous users (without accounts) to send tells
+func (h *TellHandler) CreatePublicTell(c *fiber.Ctx) error {
+	type CreateTellInput struct {
+		ReceiverID  uuid.UUID `json:"receiver_id"`
+		Content     string    `json:"content"`
+		IsAnonymous bool      `json:"is_anonymous"`
+	}
+
+	var input CreateTellInput
+	if err := c.BodyParser(&input); err != nil {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Invalid input"})
+	}
+
+	if input.Content == "" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Content is required"})
+	}
+
+	// Verify receiver exists
+	var receiver models.User
+	if result := h.DB.First(&receiver, "id = ?", input.ReceiverID); result.Error != nil {
+		return c.Status(fiber.StatusNotFound).JSON(fiber.Map{"error": "User not found"})
+	}
+
+	tell := models.Tell{
+		ReceiverID:  input.ReceiverID,
+		Content:     input.Content,
+		IsAnonymous: true, // Always anonymous for public tells
+		SenderID:    nil,  // No sender for anonymous tells
+	}
+
+	if result := h.DB.Create(&tell); result.Error != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not create tell"})
+	}
+
+	// Send notification
+	ws.GlobalManager.SendMessage(tell.ReceiverID.String(), fiber.Map{
+		"type": "new_tell",
+		"tell": tell,
+	})
+
+	// Send Email
+	go func() {
+		if receiver.Email != "" {
+			utils.SendNewTellEmail(receiver.Email)
+		}
+	}()
+
+	return c.JSON(tell)
+}
+
 func (h *TellHandler) GetTells(c *fiber.Ctx) error {
 	userID := c.Locals("user_id").(string)
 
@@ -296,33 +346,20 @@ func (h *TellHandler) GetUserTells(c *fiber.Ctx) error {
 	return c.JSON(result)
 }
 
-// GetPublicFeed returns all answered tells from all users with pagination
+// GetPublicFeed returns all answered tells, prioritizing followed users then others, sorted by newest answered
 func (h *TellHandler) GetPublicFeed(c *fiber.Ctx) error {
-	limitStr := c.Query("limit", "10")
+	limitStr := c.Query("limit", "20")
 	offsetStr := c.Query("offset", "0")
+	userIDStr := c.Query("user_id", "") // Current logged-in user ID (optional)
 
 	var limit, offset int
 	if _, err := fmt.Sscanf(limitStr, "%d", &limit); err != nil || limit <= 0 {
-		limit = 10
+		limit = 20
 	}
 	if _, err := fmt.Sscanf(offsetStr, "%d", &offset); err != nil || offset < 0 {
 		offset = 0
 	}
 
-	// Get tells with answers only, include receiver info
-	var tells []models.Tell
-	if result := h.DB.
-		Joins("INNER JOIN answers ON answers.tell_id = tells.id").
-		Preload("Answer").
-		Preload("Answer.Replies").
-		Order("answers.created_at desc").
-		Limit(limit).
-		Offset(offset).
-		Find(&tells); result.Error != nil {
-		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not fetch feed"})
-	}
-
-	// Get receiver info for each tell
 	type FeedItem struct {
 		models.Tell
 		Receiver struct {
@@ -331,14 +368,129 @@ func (h *TellHandler) GetPublicFeed(c *fiber.Ctx) error {
 			FullName string    `json:"full_name"`
 			Avatar   string    `json:"avatar"`
 		} `json:"receiver"`
+		IsFromFollowing bool `json:"is_from_following"`
 	}
 
 	var feedItems []FeedItem
+
+	// If user is logged in, get their following list and prioritize those tells
+	if userIDStr != "" {
+		// Get list of user IDs that the current user is following
+		var followingIDs []uuid.UUID
+		h.DB.Model(&models.Follow{}).
+			Where("follower_id = ?", userIDStr).
+			Pluck("following_id", &followingIDs)
+
+		if len(followingIDs) > 0 {
+			// First: Get tells from followed users (sorted by newest answered)
+			var followedTells []models.Tell
+			h.DB.
+				Where("receiver_id IN ?", followingIDs).
+				Joins("INNER JOIN answers ON answers.tell_id = tells.id").
+				Preload("Answer").
+				Preload("Answer.Replies").
+				Order("answers.created_at desc").
+				Find(&followedTells)
+
+			// Add followed tells to feed
+			for _, tell := range followedTells {
+				var receiver models.User
+				h.DB.Select("id, username, full_name, avatar").First(&receiver, "id = ?", tell.ReceiverID)
+
+				item := FeedItem{Tell: tell, IsFromFollowing: true}
+				item.Receiver.ID = receiver.ID
+				item.Receiver.Username = receiver.Username
+				item.Receiver.FullName = receiver.FullName
+				item.Receiver.Avatar = receiver.Avatar
+
+				// Hide SenderID if anonymous
+				if tell.IsAnonymous {
+					item.Tell.SenderID = nil
+					if item.Tell.Answer != nil {
+						for j := range item.Tell.Answer.Replies {
+							if item.Tell.Answer.Replies[j].SenderID != tell.ReceiverID {
+								item.Tell.Answer.Replies[j].SenderID = uuid.Nil
+							}
+						}
+					}
+				}
+
+				feedItems = append(feedItems, item)
+			}
+
+			// Second: Get tells from non-followed users (sorted by newest answered)
+			var otherTells []models.Tell
+			h.DB.
+				Where("receiver_id NOT IN ?", followingIDs).
+				Where("receiver_id != ?", userIDStr). // Exclude own tells
+				Joins("INNER JOIN answers ON answers.tell_id = tells.id").
+				Preload("Answer").
+				Preload("Answer.Replies").
+				Order("answers.created_at desc").
+				Find(&otherTells)
+
+			// Add other tells to feed
+			for _, tell := range otherTells {
+				var receiver models.User
+				h.DB.Select("id, username, full_name, avatar").First(&receiver, "id = ?", tell.ReceiverID)
+
+				item := FeedItem{Tell: tell, IsFromFollowing: false}
+				item.Receiver.ID = receiver.ID
+				item.Receiver.Username = receiver.Username
+				item.Receiver.FullName = receiver.FullName
+				item.Receiver.Avatar = receiver.Avatar
+
+				// Hide SenderID if anonymous
+				if tell.IsAnonymous {
+					item.Tell.SenderID = nil
+					if item.Tell.Answer != nil {
+						for j := range item.Tell.Answer.Replies {
+							if item.Tell.Answer.Replies[j].SenderID != tell.ReceiverID {
+								item.Tell.Answer.Replies[j].SenderID = uuid.Nil
+							}
+						}
+					}
+				}
+
+				feedItems = append(feedItems, item)
+			}
+
+			// Apply pagination after combining
+			if offset >= len(feedItems) {
+				return c.JSON([]FeedItem{})
+			}
+			end := offset + limit
+			if end > len(feedItems) {
+				end = len(feedItems)
+			}
+			return c.JSON(feedItems[offset:end])
+		}
+	}
+
+	// Fallback: No user logged in or user has no followings - just get all tells sorted by newest
+	var tells []models.Tell
+	query := h.DB.
+		Joins("INNER JOIN answers ON answers.tell_id = tells.id").
+		Preload("Answer").
+		Preload("Answer.Replies").
+		Order("answers.created_at desc").
+		Limit(limit).
+		Offset(offset)
+
+	// Exclude own tells if user is logged in
+	if userIDStr != "" {
+		query = query.Where("receiver_id != ?", userIDStr)
+	}
+
+	if result := query.Find(&tells); result.Error != nil {
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not fetch feed"})
+	}
+
 	for _, tell := range tells {
 		var receiver models.User
 		h.DB.Select("id, username, full_name, avatar").First(&receiver, "id = ?", tell.ReceiverID)
 
-		item := FeedItem{Tell: tell}
+		item := FeedItem{Tell: tell, IsFromFollowing: false}
 		item.Receiver.ID = receiver.ID
 		item.Receiver.Username = receiver.Username
 		item.Receiver.FullName = receiver.FullName

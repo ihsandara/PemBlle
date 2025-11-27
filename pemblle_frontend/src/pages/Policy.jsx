@@ -5,7 +5,7 @@ import { Shield, Eye, Lock, Database, Mail, Trash2, Globe, FileText } from 'luci
 function Policy() {
     const { t, i18n } = useTranslation()
     const isRtl = i18n.language === 'ar' || i18n.language === 'ku'
-    const lastUpdated = 'November 27, 2024'
+    const lastUpdated = 'November 27, 2025'
 
     const sections = [
         {

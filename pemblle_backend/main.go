@@ -36,7 +36,7 @@ func main() {
 	}
 
 	// Auto Migrate
-	db.AutoMigrate(&models.User{}, &models.PendingUser{}, &models.Tell{}, &models.Answer{}, &models.Reply{}, &models.Follow{})
+	db.AutoMigrate(&models.User{}, &models.PendingUser{}, &models.Tell{}, &models.Answer{}, &models.Reply{}, &models.Follow{}, &models.Chat{}, &models.Message{})
 
 	app := fiber.New()
 
@@ -89,6 +89,7 @@ func main() {
 	// Public tell routes (Must be defined before protected group or use different prefix)
 	api.Get("/public/tells/:username", tellHandler.GetUserTells)
 	api.Get("/public/feed", tellHandler.GetPublicFeed)
+	api.Post("/public/tells", tellHandler.CreatePublicTell) // Anonymous users can send tells
 
 	tells := api.Group("/tells")
 	tells.Use(middleware.Protected())
@@ -98,6 +99,17 @@ func main() {
 	tells.Get("/unread-count", tellHandler.GetUnansweredCount)
 	tells.Post("/:id/answer", tellHandler.AnswerTell)
 	tells.Post("/answers/:id/reply", tellHandler.ReplyToAnswer)
+
+	// Chat Routes
+	chatHandler := handlers.NewChatHandler(db)
+	chats := api.Group("/chats")
+	chats.Use(middleware.Protected())
+	chats.Get("/", chatHandler.GetChats)
+	chats.Post("/", chatHandler.GetOrCreateChat)
+	chats.Get("/unread-count", chatHandler.GetUnreadCount)
+	chats.Get("/:chatId/messages", chatHandler.GetMessages)
+	chats.Post("/:chatId/messages", chatHandler.SendMessage)
+	chats.Put("/:chatId/read", chatHandler.MarkAsRead)
 
 	// WebSocket
 	app.Use("/ws", func(c *fiber.Ctx) error {

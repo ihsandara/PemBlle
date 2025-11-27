@@ -70,3 +70,27 @@ type Follow struct {
 func (Follow) TableName() string {
 	return "follows"
 }
+
+// Chat represents a conversation between two users
+type Chat struct {
+	ID          uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
+	User1ID     uuid.UUID `gorm:"type:uuid;not null" json:"user1_id"`
+	User2ID     uuid.UUID `gorm:"type:uuid;not null" json:"user2_id"`
+	User1       *User     `gorm:"foreignKey:User1ID" json:"user1,omitempty"`
+	User2       *User     `gorm:"foreignKey:User2ID" json:"user2,omitempty"`
+	LastMessage *Message  `gorm:"-" json:"last_message,omitempty"`
+	UnreadCount int       `gorm:"-" json:"unread_count"`
+	CreatedAt   time.Time `json:"created_at"`
+	UpdatedAt   time.Time `json:"updated_at"`
+}
+
+// Message represents a single message in a chat
+type Message struct {
+	ID        uuid.UUID `gorm:"type:uuid;default:gen_random_uuid();primaryKey" json:"id"`
+	ChatID    uuid.UUID `gorm:"type:uuid;not null;index" json:"chat_id"`
+	SenderID  uuid.UUID `gorm:"type:uuid;not null" json:"sender_id"`
+	Sender    *User     `gorm:"foreignKey:SenderID" json:"sender,omitempty"`
+	Content   string    `gorm:"not null" json:"content"`
+	IsRead    bool      `gorm:"default:false" json:"is_read"`
+	CreatedAt time.Time `json:"created_at"`
+}

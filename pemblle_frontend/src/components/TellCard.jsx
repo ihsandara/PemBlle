@@ -1,16 +1,40 @@
 import { useState, useEffect } from 'react'
+import { Link, useNavigate } from 'react-router-dom'
 import axios from 'axios'
 import { formatDistanceToNow } from 'date-fns'
 import { useTranslation } from 'react-i18next'
+import { MessageCircle } from 'lucide-react'
 
 function TellCard({ tell, onAnswer, showReplies = true, isSender = false }) {
     const { t } = useTranslation()
+    const navigate = useNavigate()
     const [answer, setAnswer] = useState('')
     const [isSubmitting, setIsSubmitting] = useState(false)
     const [replyContent, setReplyContent] = useState('')
     const [isReplying, setIsReplying] = useState(false)
     const [showAllReplies, setShowAllReplies] = useState(false)
     const [localReplies, setLocalReplies] = useState(tell.answer?.replies || [])
+    const [isChatting, setIsChatting] = useState(false)
+
+    const handleStartChat = async () => {
+        if (tell.is_anonymous || !tell.sender_id) return
+        
+        setIsChatting(true)
+        try {
+            const token = localStorage.getItem('token')
+            const res = await axios.post('/api/chat', {
+                user_id: tell.sender_id
+            }, {
+                headers: { Authorization: `Bearer ${token}` }
+            })
+            navigate(`/chat/${res.data.ID}`)
+        } catch (err) {
+            console.error('Failed to start chat:', err)
+            alert('Failed to start chat')
+        } finally {
+            setIsChatting(false)
+        }
+    }
 
     const handleAnswer = async (e) => {
         e.preventDefault()
@@ -48,7 +72,7 @@ function TellCard({ tell, onAnswer, showReplies = true, isSender = false }) {
     }
 
     return (
-        <div className="card-hover">
+        <div className="card-hover group/card">
             {/* Question from Anonymous/Sender */}
             <div className="flex items-start gap-3 mb-4">
                 <div className={`w-9 h-9 sm:w-10 sm:h-10 rounded-full flex items-center justify-center flex-shrink-0 ${isSender ? 'bg-brand-600' : 'bg-dark-700'}`}>
@@ -61,14 +85,32 @@ function TellCard({ tell, onAnswer, showReplies = true, isSender = false }) {
                     )}
                 </div>
                 <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1">
-                        <span className="text-sm font-medium text-dark-300">
-                            {isSender ? t('you_asked') : (tell.is_anonymous ? t('anonymous') : t('someone'))}
-                        </span>
-                        <span className="text-xs text-dark-600">•</span>
-                        <span className="text-xs text-dark-500">
-                            {formatDistanceToNow(new Date(tell.created_at))} {t('ago')}
-                        </span>
+                    <div className="flex items-center justify-between mb-1">
+                        <div className="flex items-center gap-2">
+                            <span className="text-sm font-medium text-dark-300">
+                                {isSender ? t('you_asked') : (tell.is_anonymous ? t('anonymous') : t('someone'))}
+                            </span>
+                            <span className="text-xs text-dark-600">•</span>
+                            <span className="text-xs text-dark-500">
+                                {formatDistanceToNow(new Date(tell.created_at))} {t('ago')}
+                            </span>
+                        </div>
+                        
+                        {/* Chat Button (Only visible for non-anonymous incoming tells) */}
+                        {!isSender && !tell.is_anonymous && tell.sender_id && (
+                            <button 
+                                onClick={handleStartChat}
+                                disabled={isChatting}
+                                className="text-dark-400 hover:text-brand-400 p-1.5 rounded-lg hover:bg-brand-500/10 transition-all opacity-0 group-hover/card:opacity-100"
+                                title={t('send_message')}
+                            >
+                                {isChatting ? (
+                                    <div className="w-4 h-4 border-2 border-brand-400/30 border-t-brand-400 rounded-full animate-spin"></div>
+                                ) : (
+                                    <MessageCircle className="w-4 h-4" />
+                                )}
+                            </button>
+                        )}
                     </div>
                     <p className="text-dark-100 text-sm sm:text-base break-words">{tell.content}</p>
                 </div>
