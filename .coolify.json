@@ -1,0 +1,47 @@
+{
+  "name": "PemBlle",
+  "description": "Anonymous Q&A Social Platform",
+  "type": "docker-compose",
+  "dockerComposeFile": "docker-compose.yml",
+  "services": {
+    "frontend": {
+      "port": 80,
+      "healthcheck": {
+        "path": "/",
+        "interval": 30,
+        "timeout": 10,
+        "retries": 3
+      }
+    },
+    "backend": {
+      "port": 8080,
+      "healthcheck": {
+        "path": "/api/health",
+        "interval": 30,
+        "timeout": 10,
+        "retries": 3
+      }
+    }
+  },
+  "volumes": [
+    "postgres_data",
+    "uploads_data"
+  ],
+  "env": {
+    "required": [
+      "POSTGRES_USER",
+      "POSTGRES_PASSWORD",
+      "POSTGRES_DB",
+      "JWT_SECRET",
+      "FRONTEND_URL"
+    ],
+    "optional": [
+      "SMTP_HOST",
+      "SMTP_PORT",
+      "SMTP_USER",
+      "SMTP_PASS",
+      "SMTP_FROM",
+      "ALLOWED_ORIGINS"
+    ]
+  }
+}
