@@ -1,6 +1,36 @@
 version: '3.8'
 
 services:
+  # Traefik Reverse Proxy with SSL
+  traefik:
+    image: traefik:v2.10
+    container_name: pemblle_traefik
+    restart: unless-stopped
+    command:
+      # Enable Docker provider
+      - "--providers.docker=true"
+      - "--providers.docker.exposedbydefault=false"
+      # Entry points
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # HTTP to HTTPS redirect
+      - "--entrypoints.web.http.redirections.entrypoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entrypoint.scheme=https"
+      # Let's Encrypt SSL
+      - "--certificatesresolvers.letsencrypt.acme.tlschallenge=true"
+      - "--certificatesresolvers.letsencrypt.acme.email=info@pemblle.link"
+      - "--certificatesresolvers.letsencrypt.acme.storage=/letsencrypt/acme.json"
+      # Logging (optional)
+      - "--log.level=INFO"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - traefik_letsencrypt:/letsencrypt
+    networks:
+      - pemblle_network
+
   # PostgreSQL Database
   db:
     image: postgres:16-alpine
@@ -12,6 +42,8 @@ services:
       POSTGRES_DB: ${POSTGRES_DB:-pemblle}
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - pemblle_network
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-pemblle}"]
       interval: 10s
@@ -34,9 +66,12 @@ services:
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASS: ${SMTP_PASS:-}
       SMTP_FROM: ${SMTP_FROM:-}
-      FRONTEND_URL: ${FRONTEND_URL:-http://localhost}
+      FRONTEND_URL: ${FRONTEND_URL:-https://pemblle.link}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-https://pemblle.link}
     volumes:
       - uploads_data:/app/uploads
+    networks:
+      - pemblle_network
     depends_on:
       db:
         condition: service_healthy
@@ -48,11 +83,40 @@ services:
       dockerfile: Dockerfile
     container_name: pemblle_frontend
     restart: unless-stopped
-    expose:
-      - "80"
+    networks:
+      - pemblle_network
     depends_on:
       - backend
+    labels:
+      # Enable Traefik for this service
+      - "traefik.enable=true"
+      
+      # HTTP Router (redirects to HTTPS)
+      - "traefik.http.routers.pemblle-web.rule=Host(`pemblle.link`) || Host(`www.pemblle.link`)"
+      - "traefik.http.routers.pemblle-web.entrypoints=web"
+      
+      # HTTPS Router with SSL
+      - "traefik.http.routers.pemblle-websecure.rule=Host(`pemblle.link`) || Host(`www.pemblle.link`)"
+      - "traefik.http.routers.pemblle-websecure.entrypoints=websecure"
+      - "traefik.http.routers.pemblle-websecure.tls=true"
+      - "traefik.http.routers.pemblle-websecure.tls.certresolver=letsencrypt"
+      
+      # Service configuration
+      - "traefik.http.services.pemblle.loadbalancer.server.port=80"
+      
+      # Redirect www to non-www (optional)
+      - "traefik.http.middlewares.pemblle-redirect-www.redirectregex.regex=^https://www\\.pemblle\\.link/(.*)"
+      - "traefik.http.middlewares.pemblle-redirect-www.redirectregex.replacement=https://pemblle.link/$${1}"
+      - "traefik.http.routers.pemblle-websecure.middlewares=pemblle-redirect-www"
 
 volumes:
   postgres_data:
+    driver: local
   uploads_data:
+    driver: local
+  traefik_letsencrypt:
+    driver: local
+
+networks:
+  pemblle_network:
+    driver: bridge
