@@ -5,6 +5,7 @@ import (
 	"log"
 	"net/smtp"
 	"os"
+	"time"
 )
 
 // Modern email template wrapper with beautiful design
@@ -132,7 +133,7 @@ func getEmailTemplate(title, content, buttonText, buttonLink, footerText, icon s
     </table>
 </body>
 </html>
-`, title, fromName, icon, title, content, buttonLink, buttonText, footerText, fromName, 2024, fromName)
+`, title, fromName, icon, title, content, buttonLink, buttonText, footerText, fromName, time.Now().Year(), fromName)
 }
 
 func SendEmail(toEmail, subjectText, bodyContent string) error {

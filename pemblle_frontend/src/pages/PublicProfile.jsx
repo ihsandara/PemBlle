@@ -156,11 +156,11 @@ function PublicProfile() {
             }, {
                 headers: token ? { Authorization: `Bearer ${token}` } : {}
             })
-            setMessage({ type: 'success', text: '✨ Tell sent successfully!' })
+            setMessage({ type: 'success', text: t('tell_sent_success') })
             setTellContent('')
             setTimeout(() => setMessage({ type: '', text: '' }), 3000)
         } catch (err) {
-            setMessage({ type: 'error', text: err.response?.data?.error || 'Failed to send tell' })
+            setMessage({ type: 'error', text: err.response?.data?.error || t('tell_send_failed') })
         } finally {
             setSending(false)
         }
@@ -178,8 +178,8 @@ function PublicProfile() {
         return (
             <div className="card text-center py-16 max-w-md mx-auto">
                 <div className="text-4xl mb-3">🔍</div>
-                <h2 className="text-lg font-medium text-dark-200 mb-1">User not found</h2>
-                <p className="text-dark-500 text-sm">This user does not exist.</p>
+                <h2 className="text-lg font-medium text-dark-200 mb-1">{t('user_not_found')}</h2>
+                <p className="text-dark-500 text-sm">{t('user_not_exist')}</p>
             </div>
         )
     }

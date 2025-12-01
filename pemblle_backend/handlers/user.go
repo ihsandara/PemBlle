@@ -1,14 +1,20 @@
 package handlers
 
 import (
+	"bytes"
 	"fmt"
+	"image"
+	"image/jpeg"
+	"image/png"
 	"log"
-	"path/filepath"
+	"os"
 	"prswjo/models"
 	"prswjo/utils"
 
+	"github.com/disintegration/imaging"
 	"github.com/gofiber/fiber/v2"
 	"github.com/google/uuid"
+	"golang.org/x/image/webp"
 	"gorm.io/gorm"
 )
 
@@ -112,25 +118,103 @@ func (h *UserHandler) UploadAvatar(c *fiber.Ctx) error {
 	}
 
 	// Validate file type
-	if file.Header.Get("Content-Type") != "image/jpeg" &&
-		file.Header.Get("Content-Type") != "image/png" &&
-		file.Header.Get("Content-Type") != "image/jpg" {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Only JPEG and PNG images are allowed"})
+	contentType := file.Header.Get("Content-Type")
+	if contentType != "image/jpeg" &&
+		contentType != "image/png" &&
+		contentType != "image/jpg" &&
+		contentType != "image/webp" &&
+		contentType != "image/gif" {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Only JPEG, PNG, WebP, and GIF images are allowed"})
 	}
 
-	// Validate file size (max 5MB)
-	if file.Size > 5*1024*1024 {
-		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "File size must be less than 5MB"})
+	// Validate file size (max 10MB for original upload, will be compressed)
+	const maxFileSize = 10 * 1024 * 1024 // 10MB
+	if file.Size > maxFileSize {
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{
+			"error": fmt.Sprintf("File size must be less than %dMB", maxFileSize/(1024*1024)),
+		})
 	}
 
-	// Generate unique filename
-	ext := filepath.Ext(file.Filename)
-	filename := fmt.Sprintf("%s%s", userID, ext)
-	filepath := fmt.Sprintf("./uploads/avatars/%s", filename)
+	// Open the uploaded file
+	src, err := file.Open()
+	if err != nil {
+		log.Printf("❌ Failed to open uploaded file: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not process file"})
+	}
+	defer src.Close()
 
-	// Save the file
-	if err := c.SaveFile(file, filepath); err != nil {
+	// Decode the image based on content type
+	var img image.Image
+	switch contentType {
+	case "image/jpeg", "image/jpg":
+		img, err = jpeg.Decode(src)
+	case "image/png":
+		img, err = png.Decode(src)
+	case "image/webp":
+		img, err = webp.Decode(src)
+	case "image/gif":
+		img, _, err = image.Decode(src)
+	default:
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Unsupported image format"})
+	}
+
+	if err != nil {
+		log.Printf("❌ Failed to decode image: %v", err)
+		return c.Status(fiber.StatusBadRequest).JSON(fiber.Map{"error": "Could not decode image. Please upload a valid image file."})
+	}
+
+	// Resize image to max 400x400 while maintaining aspect ratio
+	const maxDimension = 400
+	bounds := img.Bounds()
+	width := bounds.Dx()
+	height := bounds.Dy()
+
+	if width > maxDimension || height > maxDimension {
+		if width > height {
+			img = imaging.Resize(img, maxDimension, 0, imaging.Lanczos)
+		} else {
+			img = imaging.Resize(img, 0, maxDimension, imaging.Lanczos)
+		}
+		log.Printf("🔄 Image resized from %dx%d to %dx%d", width, height, img.Bounds().Dx(), img.Bounds().Dy())
+	}
+
+	// Encode to optimized JPEG format with compression
+	// Note: WebP encoding requires CGO + libwebp. Using JPEG for maximum compatibility.
+	var buf bytes.Buffer
+	jpegOptions := &jpeg.Options{Quality: 85} // Good balance between quality and file size
+	if err := jpeg.Encode(&buf, img, jpegOptions); err != nil {
+		log.Printf("❌ Failed to encode image: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not compress image"})
+	}
+
+	// Generate unique filename with .jpg extension
+	filename := fmt.Sprintf("%s.jpg", userID)
+
+	// Ensure uploads directory exists
+	uploadDir := "./uploads/avatars"
+	if err := os.MkdirAll(uploadDir, 0755); err != nil {
+		log.Printf("❌ Failed to create upload directory: %v", err)
+		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not create upload directory"})
+	}
+
+	savePath := fmt.Sprintf("%s/%s", uploadDir, filename)
+
+	// Write the compressed image file
+	if err := os.WriteFile(savePath, buf.Bytes(), 0644); err != nil {
+		log.Printf("❌ Failed to save avatar file: %v", err)
 		return c.Status(fiber.StatusInternalServerError).JSON(fiber.Map{"error": "Could not save file"})
+	}
+
+	log.Printf("✅ Avatar saved successfully: %s (original: %d KB, compressed: %d KB)",
+		savePath, file.Size/1024, buf.Len()/1024)
+
+	// Delete old avatar files with different extensions if they exist
+	for _, ext := range []string{".webp", ".jpeg", ".png", ".gif"} {
+		oldPath := fmt.Sprintf("%s/%s%s", uploadDir, userID, ext)
+		if _, err := os.Stat(oldPath); err == nil {
+			os.Remove(oldPath)
+			log.Printf("🗑️ Removed old avatar: %s", oldPath)
+		}
 	}
 
 	// Update user avatar in database

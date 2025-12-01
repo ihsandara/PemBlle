@@ -11,6 +11,7 @@ yarn-error.log
 # --- Environment Variables ---
 .env
 .env.*
+!.env.example
 
 # --- Build Outputs ---
 dist/

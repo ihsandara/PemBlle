@@ -7,15 +7,15 @@ export default defineConfig({
     server: {
         proxy: {
             '/api': {
-                target: 'http://localhost:8080',
+                target: 'https://api.pemblle.ink',
                 changeOrigin: true,
             },
             '/uploads': {
-                target: 'http://localhost:8080',
+                target: 'https://api.pemblle.ink',
                 changeOrigin: true,
             },
             '/ws': {
-                target: 'ws://localhost:8080',
+                target: 'ws://api.pemblle.ink',
                 ws: true
             }
         }

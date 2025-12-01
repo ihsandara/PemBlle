@@ -1,8 +1,10 @@
 import React, { useEffect, useState, useRef } from 'react'
 import { useSearchParams, useNavigate, Link } from 'react-router-dom'
+import { useTranslation } from 'react-i18next'
 import { CheckCircle, XCircle, Loader2, Sparkles, ArrowRight, Mail, RefreshCw } from 'lucide-react'
 
 function VerifyEmail() {
+    const { t } = useTranslation()
     const [searchParams] = useSearchParams()
     const token = searchParams.get('token')
     const navigate = useNavigate()
@@ -89,8 +91,8 @@ function VerifyEmail() {
                                 </div>
                                 
                                 <div>
-                                    <h2 className="text-2xl font-bold text-white mb-2">Verifying your email</h2>
-                                    <p className="text-dark-400">Please wait while we confirm your email address...</p>
+                                    <h2 className="text-2xl font-bold text-white mb-2">{t('verifying_email')}</h2>
+                                    <p className="text-dark-400">{t('verifying_email_wait')}</p>
                                 </div>
 
                                 <div className="flex items-center justify-center gap-2 text-dark-500">
@@ -115,16 +117,16 @@ function VerifyEmail() {
                                 </div>
                                 
                                 <div>
-                                    <h2 className="text-2xl font-bold text-white mb-2">Email Verified! 🎉</h2>
-                                    <p className="text-dark-400 mb-4">Your account is now fully activated.</p>
-                                    <p className="text-dark-500 text-sm">Redirecting to login in <span className="text-brand-400 font-bold">{countdown}</span> seconds...</p>
+                                    <h2 className="text-2xl font-bold text-white mb-2">{t('email_verified')} 🎉</h2>
+                                    <p className="text-dark-400 mb-4">{t('account_activated')}</p>
+                                    <p className="text-dark-500 text-sm">{t('redirecting_login')} <span className="text-brand-400 font-bold">{countdown}</span> {t('seconds')}...</p>
                                 </div>
 
                                 <Link 
                                     to="/login"
                                     className="inline-flex items-center gap-2 px-6 py-3 bg-gradient-to-r from-green-500 to-emerald-500 text-white font-semibold rounded-xl hover:from-green-400 hover:to-emerald-400 transition-all shadow-lg shadow-green-500/25"
                                 >
-                                    Continue to Login
+                                    {t('continue_to_login')}
                                     <ArrowRight className="w-4 h-4" />
                                 </Link>
                             </div>
@@ -142,9 +144,9 @@ function VerifyEmail() {
                                 </div>
                                 
                                 <div>
-                                    <h2 className="text-2xl font-bold text-white mb-2">Verification Failed</h2>
-                                    <p className="text-dark-400 mb-1">We couldn't verify your email address.</p>
-                                    <p className="text-dark-500 text-sm">The link may be invalid or expired.</p>
+                                    <h2 className="text-2xl font-bold text-white mb-2">{t('verification_failed')}</h2>
+                                    <p className="text-dark-400 mb-1">{t('verification_failed_desc')}</p>
+                                    <p className="text-dark-500 text-sm">{t('link_invalid_expired')}</p>
                                 </div>
 
                                 <div className="space-y-3">
@@ -152,7 +154,7 @@ function VerifyEmail() {
                                         to="/login"
                                         className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-brand-600 to-purple-600 text-white font-semibold rounded-xl hover:from-brand-500 hover:to-purple-500 transition-all shadow-lg shadow-brand-500/25"
                                     >
-                                        Go to Login
+                                        {t('go_to_login')}
                                         <ArrowRight className="w-4 h-4" />
                                     </Link>
                                     
@@ -161,7 +163,7 @@ function VerifyEmail() {
                                         className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-dark-800 text-dark-300 font-medium rounded-xl hover:bg-dark-700 transition-colors border border-dark-700"
                                     >
                                         <RefreshCw className="w-4 h-4" />
-                                        Try Again
+                                        {t('try_again')}
                                     </button>
                                 </div>
                             </div>
@@ -171,7 +173,7 @@ function VerifyEmail() {
                     {/* Footer */}
                     <div className="px-8 pb-6 text-center">
                         <p className="text-xs text-dark-500">
-                            Having trouble? <a href="mailto:support@pemblle.com" className="text-brand-400 hover:text-brand-300">Contact Support</a>
+                            {t('having_trouble')} <a href="mailto:support@pemblle.com" className="text-brand-400 hover:text-brand-300">{t('contact_support')}</a>
                         </p>
                     </div>
                 </div>

@@ -300,15 +300,15 @@ function ShareModal({ isOpen, onClose, profileLink, user }) {
                     {/* Story Preview Card - Smaller on mobile */}
                     {user && (
                         <div className="mb-5 sm:mb-8">
-                            <h4 className="text-xs sm:text-sm font-medium text-dark-400 mb-2 sm:mb-3 uppercase tracking-wider">Create Story Post</h4>
+                            <h4 className="text-xs sm:text-sm font-medium text-dark-400 mb-2 sm:mb-3 uppercase tracking-wider">{t('create_story_post')}</h4>
                             <div 
                                 className="aspect-[9/16] max-h-[200px] sm:max-h-[280px] w-auto mx-auto rounded-xl sm:rounded-2xl bg-gradient-to-br from-brand-600 via-purple-600 to-pink-600 relative overflow-hidden shadow-lg group cursor-pointer"
                                 onClick={generateStoryImage}
                             >
                                 <div className="absolute inset-0 flex flex-col items-center justify-center text-white p-3 sm:p-6 text-center">
                                     <div className="bg-white/10 backdrop-blur-md border border-white/20 p-3 sm:p-6 rounded-xl sm:rounded-2xl w-full">
-                                        <h3 className="font-bold text-sm sm:text-2xl mb-0.5 sm:mb-1">Ask Me Anything</h3>
-                                        <p className="text-white/80 text-xs sm:text-sm mb-2 sm:mb-6">in PemBlle</p>
+                                        <h3 className="font-bold text-sm sm:text-2xl mb-0.5 sm:mb-1">{t('ask_me_anything')}</h3>
+                                        <p className="text-white/80 text-xs sm:text-sm mb-2 sm:mb-6">{t('in_pemblle')}</p>
                                         
                                         <div className="w-10 h-10 sm:w-20 sm:h-20 bg-dark-900 rounded-full mx-auto mb-1.5 sm:mb-3 flex items-center justify-center text-sm sm:text-2xl font-bold ring-2 sm:ring-4 ring-white/20">
                                             {user.username?.[0]?.toUpperCase()}
@@ -323,7 +323,7 @@ function ShareModal({ isOpen, onClose, profileLink, user }) {
                                     <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 active:opacity-100 transition-opacity flex items-center justify-center">
                                         <div className="bg-white text-dark-900 px-3 py-1.5 sm:px-4 sm:py-2 rounded-full font-bold text-xs sm:text-base flex items-center gap-1.5 sm:gap-2 transform translate-y-4 group-hover:translate-y-0 transition-transform">
                                             <Download className="w-3 h-3 sm:w-4 sm:h-4" />
-                                            Download
+                                            {t('download')}
                                         </div>
                                     </div>
                                 </div>
@@ -350,7 +350,7 @@ function ShareModal({ isOpen, onClose, profileLink, user }) {
                             className="flex items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-3.5 rounded-xl bg-[#FFFC00] text-black font-bold text-sm sm:text-base hover:brightness-95 active:scale-[0.98] transition-all disabled:opacity-50"
                         >
                             <SnapchatIcon />
-                            Snapchat
+                            {t('snapchat')}
                         </button>
                         <button 
                             onClick={shareToInstagram} 
@@ -358,7 +358,7 @@ function ShareModal({ isOpen, onClose, profileLink, user }) {
                             className="flex items-center justify-center gap-1.5 sm:gap-2 p-3 sm:p-3.5 rounded-xl bg-gradient-to-tr from-[#FFDD55] via-[#FF543E] to-[#833AB4] text-white font-bold text-sm sm:text-base hover:brightness-95 active:scale-[0.98] transition-all disabled:opacity-50"
                         >
                             <InstagramIcon />
-                            Instagram
+                            {t('instagram')}
                         </button>
                     </div>
 
@@ -369,21 +369,21 @@ function ShareModal({ isOpen, onClose, profileLink, user }) {
                         className="w-full flex items-center justify-center gap-2 p-2.5 sm:p-3 rounded-xl bg-dark-800 text-dark-200 font-medium text-sm sm:text-base hover:bg-dark-700 transition-colors mb-4 sm:mb-6 disabled:opacity-50"
                     >
                         <Download className="w-4 h-4 sm:w-5 sm:h-5" />
-                        Download Story Image
+                        {t('download_story_image')}
                     </button>
 
                     {/* Mobile Tip - Hidden on mobile (they already know) */}
                     <div className="hidden sm:block mb-6 p-3 rounded-xl bg-dark-800/50 border border-dark-700">
                         <p className="text-xs text-dark-400 flex items-start gap-2">
                             <Smartphone className="w-4 h-4 mt-0.5 shrink-0" />
-                            <span>On mobile, tap Snapchat or Instagram to share directly to your story. On desktop, download and upload manually.</span>
+                            <span>{t('mobile_share_tip')}</span>
                         </p>
                     </div>
 
                     {/* Copy Link */}
                     <div className="bg-dark-800/50 rounded-xl p-2.5 sm:p-3 border border-dark-800 flex items-center gap-2 sm:gap-3">
                         <div className="flex-1 min-w-0">
-                            <p className="text-[10px] sm:text-xs text-dark-400 mb-0.5 sm:mb-1">Profile Link</p>
+                            <p className="text-[10px] sm:text-xs text-dark-400 mb-0.5 sm:mb-1">{t('profile_link')}</p>
                             <p className="text-xs sm:text-sm text-dark-200 truncate font-mono">{profileLink}</p>
                         </div>
                         <button 

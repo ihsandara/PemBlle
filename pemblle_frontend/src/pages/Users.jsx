@@ -74,8 +74,8 @@ function Users() {
         <div>
             {/* Header */}
             <div className="mb-6">
-                <h1 className="text-2xl font-bold text-dark-100 mb-1">Discover People</h1>
-                <p className="text-dark-500 text-sm">Find and connect with amazing people</p>
+                <h1 className="text-2xl font-bold text-dark-100 mb-1">{t('discover_people')}</h1>
+                <p className="text-dark-500 text-sm">{t('discover_people_subtitle')}</p>
             </div>
 
             {/* Search */}
@@ -83,7 +83,7 @@ function Users() {
                 <div className="relative max-w-sm">
                     <input
                         type="text"
-                        placeholder="Search users..."
+                        placeholder={t('search_users')}
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
                         className="input pl-10"
@@ -102,8 +102,8 @@ function Users() {
             ) : users.length === 0 ? (
                 <div className="card text-center py-16">
                     <div className="text-4xl mb-3">👥</div>
-                    <h3 className="text-lg font-medium text-dark-200 mb-1">No users found</h3>
-                    <p className="text-dark-500 text-sm">Try a different search term</p>
+                    <h3 className="text-lg font-medium text-dark-200 mb-1">{t('no_users_found')}</h3>
+                    <p className="text-dark-500 text-sm">{t('try_different')}</p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -141,7 +141,7 @@ function Users() {
 
             {!hasMore && users.length > 0 && (
                 <div className="text-center py-6 text-dark-500 text-sm">
-                    You've seen all users
+                    {t('seen_all_users')}
                 </div>
             )}
         </div>

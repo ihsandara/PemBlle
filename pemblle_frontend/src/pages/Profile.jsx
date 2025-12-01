@@ -3,6 +3,7 @@ import { useTranslation } from 'react-i18next'
 import { Link } from 'react-router-dom'
 import axios from 'axios'
 import ShareModal from '../components/ShareModal'
+import ImageCropper from '../components/ImageCropper'
 
 function Profile() {
     const { t } = useTranslation()
@@ -20,6 +21,9 @@ function Profile() {
     const [avatarFile, setAvatarFile] = useState(null)
     const [avatarPreview, setAvatarPreview] = useState(null)
     const [uploading, setUploading] = useState(false)
+    const [uploadProgress, setUploadProgress] = useState(0)
+    const [showCropper, setShowCropper] = useState(false)
+    const [rawImage, setRawImage] = useState(null)
     const [saving, setSaving] = useState(false)
     const [changingPassword, setChangingPassword] = useState(false)
     const [activeTab, setActiveTab] = useState('profile')
@@ -83,19 +87,40 @@ function Profile() {
     const handleAvatarChange = (e) => {
         const file = e.target.files[0]
         if (file) {
-            setAvatarFile(file)
+            // Validate file size (max 10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                setMessage({ type: 'error', text: t('file_too_large') || 'File size must be less than 10MB' })
+                return
+            }
+            
             const reader = new FileReader()
             reader.onloadend = () => {
-                setAvatarPreview(reader.result)
+                setRawImage(reader.result)
+                setShowCropper(true)
             }
             reader.readAsDataURL(file)
         }
+        // Reset input so same file can be selected again
+        e.target.value = ''
+    }
+
+    const handleCropComplete = (croppedFile, previewUrl) => {
+        setAvatarFile(croppedFile)
+        setAvatarPreview(previewUrl)
+        setShowCropper(false)
+        setRawImage(null)
+    }
+
+    const handleCropCancel = () => {
+        setShowCropper(false)
+        setRawImage(null)
     }
 
     const handleAvatarUpload = async () => {
         if (!avatarFile) return
 
         setUploading(true)
+        setUploadProgress(0)
         try {
             const token = localStorage.getItem('token')
             const formData = new FormData()
@@ -105,6 +130,10 @@ function Profile() {
                 headers: {
                     Authorization: `Bearer ${token}`,
                     'Content-Type': 'multipart/form-data'
+                },
+                onUploadProgress: (progressEvent) => {
+                    const progress = Math.round((progressEvent.loaded * 100) / progressEvent.total)
+                    setUploadProgress(progress)
                 }
             })
 
@@ -118,6 +147,7 @@ function Profile() {
             setMessage({ type: 'error', text: err.response?.data?.error || 'Failed to upload avatar' })
         } finally {
             setUploading(false)
+            setUploadProgress(0)
         }
     }
 
@@ -189,7 +219,7 @@ function Profile() {
                             </svg>
                             <input
                                 type="file"
-                                accept="image/jpeg,image/png,image/jpg"
+                                accept="image/jpeg,image/png,image/jpg,image/webp,image/gif"
                                 onChange={handleAvatarChange}
                                 className="hidden"
                             />
@@ -254,23 +284,60 @@ function Profile() {
                 {/* Avatar Upload Button */}
                 {avatarFile && (
                     <div className="mt-4 pt-4 border-t border-dark-700">
-                        <button 
-                            onClick={handleAvatarUpload} 
-                            disabled={uploading}
-                            className="btn-primary w-full sm:w-auto"
-                        >
-                            {uploading ? (
-                                <span className="flex items-center justify-center gap-2">
-                                    <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                                    </svg>
-                                    {t('uploading') || 'Uploading...'}
-                                </span>
-                            ) : (
-                                t('upload_avatar') || 'Upload New Avatar'
-                            )}
-                        </button>
+                        <div className="flex flex-col sm:flex-row items-center gap-4">
+                            {/* Preview */}
+                            <div className="flex items-center gap-3">
+                                <div className="w-12 h-12 rounded-full overflow-hidden ring-2 ring-brand-500/50">
+                                    <img src={avatarPreview} alt="Preview" className="w-full h-full object-cover" />
+                                </div>
+                                <div className="text-sm">
+                                    <p className="text-dark-200 font-medium">{t('new_avatar_ready') || 'New avatar ready'}</p>
+                                    <p className="text-dark-500 text-xs">{t('click_upload_to_save') || 'Click upload to save'}</p>
+                                </div>
+                            </div>
+                            
+                            {/* Upload Button with Progress */}
+                            <div className="flex-1 w-full sm:w-auto">
+                                {uploading ? (
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between text-sm">
+                                            <span className="text-dark-300 flex items-center gap-2">
+                                                <svg className="animate-spin w-4 h-4 text-brand-500" fill="none" viewBox="0 0 24 24">
+                                                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                                                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                                                </svg>
+                                                {t('uploading') || 'Uploading...'}
+                                            </span>
+                                            <span className="text-brand-400 font-medium">{uploadProgress}%</span>
+                                        </div>
+                                        <div className="h-2 bg-dark-700 rounded-full overflow-hidden">
+                                            <div 
+                                                className="h-full bg-gradient-to-r from-brand-600 to-brand-400 rounded-full transition-all duration-300 ease-out"
+                                                style={{ width: `${uploadProgress}%` }}
+                                            />
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="flex gap-2">
+                                        <button 
+                                            onClick={() => { setAvatarFile(null); setAvatarPreview(user.avatar); }}
+                                            className="px-4 py-2 rounded-xl bg-dark-800 text-dark-300 hover:bg-dark-700 transition-colors text-sm font-medium"
+                                        >
+                                            {t('cancel') || 'Cancel'}
+                                        </button>
+                                        <button 
+                                            onClick={handleAvatarUpload} 
+                                            className="btn-primary flex-1 sm:flex-none"
+                                        >
+                                            <svg className="w-4 h-4 inline me-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                                            </svg>
+                                            {t('upload_avatar') || 'Upload'}
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
                     </div>
                 )}
             </div>
@@ -561,6 +628,15 @@ function Profile() {
                         </div>
                     </div>
                 </div>
+            )}
+
+            {/* Image Cropper Modal */}
+            {showCropper && rawImage && (
+                <ImageCropper
+                    image={rawImage}
+                    onCropComplete={handleCropComplete}
+                    onCancel={handleCropCancel}
+                />
             )}
 
             {/* Share Modal */}
